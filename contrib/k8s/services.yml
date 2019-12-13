@@ -70,11 +70,11 @@ spec:
   selector:
     app: datamart
     what: frontend
-  type: NodePort
+  type: LoadBalancer
   ports:
   - protocol: TCP
     port: 80
-    nodePort: 30080
+    targetPort: 80
 ---
 apiVersion: v1
 kind: Service
@@ -87,11 +87,11 @@ spec:
   selector:
     app: datamart
     what: coordinator
-  type: NodePort
+  type: LoadBalancer
   ports:
   - protocol: TCP
     port: 8003
-    nodePort: 30082
+    targetPort: 8003
 ---
 apiVersion: v1
 kind: Service
@@ -104,8 +104,8 @@ spec:
   selector:
     app: datamart
     what: apiserver
-  type: NodePort
+  type: LoadBalancer
   ports:
   - protocol: TCP
     port: 8002
-    nodePort: 30081
+    targetPort: 8002
