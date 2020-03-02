@@ -1,4 +1,5 @@
 import contextlib
+from datetime import datetime
 import logging
 import math
 import numpy
@@ -239,7 +240,7 @@ def truncate_string(s, limit=140):
 @PROM_PROFILE.time()
 def process_dataset(data, dataset_id=None, metadata=None,
                     lazo_client=None, search=False, include_sample=False,
-                    coverage=True, load_max_size=None, **kwargs):
+                    coverage=True, plots=False, load_max_size=None, **kwargs):
     """Compute all metafeatures from a dataset.
 
     :param data: path to dataset, or file object, or DataFrame
@@ -252,6 +253,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
     :param include_sample: Set to True to include a few random rows to the
         result. Useful to present to a user.
     :param coverage: Whether to compute data ranges (using k-means)
+    :param plots: Whether to compute plots
     :param load_max_size: Target size of the data to be analyzed. The data will
         be randomly sampled if it is bigger. Defaults to `MAX_SIZE`, currently
         50 MB. This is different from the sample data included in the result.
@@ -387,6 +389,26 @@ def process_dataset(data, dataset_id=None, metadata=None,
                 column_meta['mean'], column_meta['stddev'] = \
                     mean_stddev(numerical_values)
 
+                # Compute histogram from numerical values
+                if plots:
+                    counts, edges = numpy.histogram(
+                        [v for v in numerical_values if v is not None],
+                        bins=10,
+                    )
+                    counts = [int(i) for i in counts]
+                    edges = [float(f) for f in edges]
+                    column_meta['plot'] = {
+                        "type": "histogram_numerical",
+                        "data": [
+                            {
+                                "count": count,
+                                "bin_start": edges[i],
+                                "bin_end": edges[i + 1],
+                            }
+                            for i, count in enumerate(counts)
+                        ]
+                    }
+
                 # Get lat/long columns
                 if types.LATITUDE in semantic_types_dict:
                     columns_lat.append(
@@ -404,7 +426,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
                         column_meta['coverage'] = ranges
 
             # Compute ranges for temporal data
-            if coverage and types.DATE_TIME in semantic_types_dict:
+            if (coverage or plots) and types.DATE_TIME in semantic_types_dict:
                 timestamps = numpy.empty(
                     len(semantic_types_dict[types.DATE_TIME]),
                     dtype='float32',
@@ -416,9 +438,55 @@ def process_dataset(data, dataset_id=None, metadata=None,
                     mean_stddev(timestamps)
 
                 # Get temporal ranges
-                ranges = get_numerical_ranges(timestamps)
-                if ranges:
-                    column_meta['coverage'] = ranges
+                if coverage:
+                    ranges = get_numerical_ranges(timestamps)
+                    if ranges:
+                        column_meta['coverage'] = ranges
+
+                # Compute histogram from temporal values
+                if plots:
+                    counts, edges = numpy.histogram(timestamps, bins=10)
+                    counts = [int(i) for i in counts]
+                    column_meta['plot'] = {
+                        "type": "histogram_temporal",
+                        "data": [
+                            {
+                                "count": count,
+                                "date_start": datetime.utcfromtimestamp(
+                                    edges[i],
+                                ),
+                                "date_end": datetime.utcfromtimestamp(
+                                    edges[i + 1],
+                                ),
+                            }
+                            for i, count in enumerate(counts)
+                        ]
+                    }
+
+            # Compute histogram from categorical values
+            if plots and types.CATEGORICAL in semantic_types_dict:
+                counts = {}
+                for value in array:
+                    if not value:
+                        continue
+                    try:
+                        counts[value] += 1
+                    except KeyError:
+                        counts[value] = 1
+                counts = sorted(
+                    counts.items(),
+                    key=lambda p: p[1],
+                )[:5]
+                column_meta['plot'] = {
+                    "type": "histogram_categorical",
+                    "data": [
+                        {
+                            "bin": value,
+                            "count": count,
+                        }
+                        for value, count in counts
+                    ]
+                }
 
             if structural_type == types.TEXT and \
                     types.DATE_TIME not in semantic_types_dict:
