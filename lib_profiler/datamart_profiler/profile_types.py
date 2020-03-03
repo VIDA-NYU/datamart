@@ -106,7 +106,10 @@ def identify_types(array, name):
             values = set(e for e in array if e)
             column_meta['num_distinct_values'] = len(values)
             max_categorical = MAX_CATEGORICAL_RATIO * (len(array) - num_empty)
-            if len(values) <= max_categorical:
+            if (
+                len(values) <= max_categorical or
+                types.BOOLEAN in semantic_types_dict
+            ):
                 semantic_types_dict[types.CATEGORICAL] = values
     elif structural_type == types.INTEGER:
         # Identify ids
