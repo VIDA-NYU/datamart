@@ -6,6 +6,63 @@
 
 <p><a href="{{ query_host }}/download/{{ dataset_id }}">Download: CSV</a>, <a href="{{ query_host }}/download/{{ dataset_id }}?format=d3m">D3M</a> ({{ size }})</p>
 
+<script src="https://cdn.jsdelivr.net/npm/vega@5.9.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@4.4.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.2.2"></script>
+
+<script>
+function setupPlot(elementId, plot) {
+  var encoding = {
+    "y": {
+      "field": "count",
+      "type": "quantitative",
+      "title": null
+    }
+  };
+  if(plot.type == 'histogram_numerical') {
+    encoding.x = {
+      "title": null,
+      "bin": {"binned": true},
+      "field": "bin_start",
+      "type": "quantitative"
+    };
+    encoding.x2 = {
+      "field": "bin_end"
+    };
+  } else if(plot.type == 'histogram_temporal') {
+    encoding.x = {
+      "title": null,
+      "bin": {"binned": true},
+      "field": "date_start",
+      "type": "temporal"
+    };
+    encoding.x2 = {
+      "field": "date_end"
+    };
+  } else if(plot.type == 'histogram_categorical') {
+    encoding.x = {
+      "title": null,
+      "bin": {"binned": true},
+      "field": "bin",
+      "type": "ordinal"
+    };
+  } else {
+    console.log("Unknown plot type ", plot.type);
+    return;
+  }
+  vegaEmbed(elementId, {
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+    "width": "container",
+    "height": "120",
+    "data": {
+      "values": plot.data
+    },
+    "mark": "bar",
+    "encoding": encoding
+  }, {actions: false});
+}
+</script>
+
 <div style="overflow: auto; max-height: 40rem;"><table class="table table-bordered table-hover">
   <thead>
     <tr>
@@ -23,6 +80,18 @@
         <span class="badge badge-primary badge-pill">{{ column.structural_type.rsplit('/', 1)[-1] }}</span>
         {% for type in column.semantic_types %}{{ semantic_type(type) }}{% endfor %}
       </th>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for column in metadata.columns %}
+      <td>
+        {% if column.plot %}
+          <div id="plot{{ loop.index0 }}" style="width: 100%;"></div>
+          <script>
+setupPlot('#plot{{ loop.index0 }}', {{ column.plot |tojson }});
+          </script>
+        {% endif %}
+      </td>
       {% endfor %}
     </tr>
   </thead>
