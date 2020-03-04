@@ -454,10 +454,10 @@ def process_dataset(data, dataset_id=None, metadata=None,
                                 "count": count,
                                 "date_start": datetime.utcfromtimestamp(
                                     edges[i],
-                                ),
+                                ).isoformat(),
                                 "date_end": datetime.utcfromtimestamp(
                                     edges[i + 1],
-                                ),
+                                ).isoformat(),
                             }
                             for i, count in enumerate(counts)
                         ]
