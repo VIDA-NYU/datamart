@@ -477,6 +477,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
                     counts.items(),
                     key=lambda p: p[1],
                 )[:5]
+                counts = sorted(counts)
                 column_meta['plot'] = {
                     "type": "histogram_categorical",
                     "data": [
