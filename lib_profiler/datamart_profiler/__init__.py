@@ -93,7 +93,7 @@ def get_numerical_ranges(values):
     This performs K-Means clustering, returning a maximum of 3 ranges.
     """
 
-    if not values:
+    if not len(values):
         return []
 
     logger.info("Computing numerical ranges, %d values", len(values))
@@ -124,7 +124,7 @@ def get_numerical_ranges(values):
     logger.info("Sizes: %r", sizes)
 
     # Convert to Elasticsearch syntax
-    ranges = [{'range': {'gte': rg[0], 'lte': rg[1]}}
+    ranges = [{'range': {'gte': float(rg[0]), 'lte': float(rg[1])}}
               for rg in ranges]
     return ranges
 
