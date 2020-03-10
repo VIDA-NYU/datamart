@@ -8,6 +8,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/vega@5.9.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.4.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-tooltip@0.21.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.2.2"></script>
 
 <script>
@@ -24,29 +25,41 @@ function setupPlot(elementId, plot) {
       "title": null,
       "bin": {"binned": true},
       "field": "bin_start",
-      "type": "quantitative"
+      "type": "quantitative",
+      "axis": null
     };
     encoding.x2 = {
       "field": "bin_end"
     };
+    encoding.tooltip = [
+      {"field": "bin_start", "title": "start", "type": "quantitative"},
+      {"field": "bin_end", "title": "end", "type": "quantitative"}
+    ];
   } else if(plot.type == 'histogram_temporal') {
     encoding.x = {
       "title": null,
       "bin": {"binned": true},
       "field": "date_start",
       "type": "temporal",
-      "utc": true
+      "utc": true,
+      "axis": null
     };
     encoding.x2 = {
       "field": "date_end"
     };
+    encoding.tooltip = [
+      {"field": "date_start", "title": "start", "type": "temporal"},
+      {"field": "date_end", "title": "end", "type": "temporal"}
+    ];
   } else if(plot.type == 'histogram_categorical') {
     encoding.x = {
       "title": null,
       "bin": {"binned": true},
       "field": "bin",
-      "type": "ordinal"
+      "type": "ordinal",
+      "axis": null
     };
+    encoding.tooltip = {"field": "bin", "type": "ordinal"};
   } else {
     console.log("Unknown plot type ", plot.type);
     return;
