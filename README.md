@@ -56,7 +56,7 @@ Start the base containers
 -------------------------
 
 ```
-$ docker-compose up -d elasticsearch rabbitmq lazo
+$ docker-compose up -d elasticsearch rabbitmq redis lazo
 ```
 
 These will take a few seconds to get up and running. Then you can start the other components:

@@ -20,6 +20,7 @@ spec:
       containers:
       - name: discoverer
         image: datamart_test_discoverer
+        args: ["testsuite"]
         imagePullPolicy: IfNotPresent
         env:
         - name: ELASTICSEARCH_HOSTS

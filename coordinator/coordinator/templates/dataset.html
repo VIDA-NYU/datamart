@@ -2,7 +2,9 @@
 {% set active_page = "dataset" %}
 
 {% block contents %}
-<h1>Dataset: {{ dataset_id }}</h1>
+<h1>{{ metadata.name }}</h1>
+
+{% if 'description' in metadata %}<p>{{ metadata.description }}</p>{% endif %}
 
 <p><a href="{{ query_host }}/download/{{ dataset_id }}">Download: CSV</a>, <a href="{{ query_host }}/download/{{ dataset_id }}?format=d3m">D3M</a> ({{ size }})</p>
 
@@ -142,7 +144,7 @@ setupPlot('#plot{{ loop.index0 }}', {{ column.plot |tojson }});
   </table>
 {%- endmacro %}
 
-<div id="spatial_coverage" style="display: none;">
+<div id="spatial_coverage" class="mb-3" style="display: none;">
 <h2 id="spatial">Spatial Coverage Info</h2>
 <p>This is the approximate spatial coverage of the data.</p>
 </div>

@@ -1,0 +1,306 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: monitoring
+  labels:
+    app: datamart
+data:
+  prometheus: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+    - job_name: prometheus
+      static_configs:
+      - targets: ["localhost:9090"]
+    - job_name: elasticsearch
+      scrape_interval: 30s
+      scrape_timeout: 10s
+      static_configs:
+      - targets: ["elasticsearch-scrape:9114"]
+    - job_name: rabbitmq
+      scrape_timeout: 5s
+      metrics_path: /api/metrics
+      static_configs:
+      - targets: ["rabbitmq-scrape:15672"]
+    - job_name: query
+      dns_sd_configs:
+      - names:
+        - query-scrape
+        type: "A"
+        port: 8000
+        refresh_interval: 60s
+    - job_name: coordinator
+      static_configs:
+      - targets: ["coordinator-scrape:8000"]
+    - job_name: profiler
+      dns_sd_configs:
+      - names:
+        - profiler-scrape
+        type: "A"
+        port: 8000
+        refresh_interval: 60s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-scrape
+  labels:
+    app: datamart
+    what: monitoring
+spec:
+  selector:
+    app: datamart
+    what: elasticsearch-exporter
+  clusterIP: None
+  ports:
+  - protocol: TCP
+    port: 9114
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-scrape
+  labels:
+    app: datamart
+    what: monitoring
+spec:
+  selector:
+    app: datamart
+    what: rabbitmq
+  clusterIP: None
+  ports:
+  - protocol: TCP
+    port: 15672
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: profiler-scrape
+  labels:
+    app: datamart
+    what: monitoring
+spec:
+  selector:
+    app: datamart
+    what: profiler
+  clusterIP: None
+  ports:
+  - protocol: TCP
+    port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: query-scrape
+  labels:
+    app: datamart
+    what: monitoring
+spec:
+  selector:
+    app: datamart
+    what: query
+  clusterIP: None
+  ports:
+  - protocol: TCP
+    port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coordinator-scrape
+  labels:
+    app: datamart
+    what: monitoring
+spec:
+  selector:
+    app: datamart
+    what: coordinator
+  clusterIP: None
+  ports:
+  - protocol: TCP
+    port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-scrape
+  labels:
+    app: datamart
+    what: monitoring
+spec:
+  selector:
+    app: datamart
+    what: elasticsearch-exporter
+  clusterIP: None
+  ports:
+  - protocol: TCP
+    port: 9114
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: elasticsearch-exporter
+  labels:
+    app: datamart
+    what: elasticsearch-exporter
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: datamart
+        what: elasticsearch-exporter
+    spec:
+      containers:
+      - name: elasticsearch-exporter
+        image: justwatch/elasticsearch_exporter:1.1.0
+        args:
+        - "--es.uri=http://elasticsearch:9200"
+        - "--es.cluster_settings"
+        - "--es.indices"
+        - "--es.indices_settings"
+        ports:
+        - containerPort: 9114
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  labels:
+    app: datamart
+    what: prometheus
+spec:
+  selector:
+    app: datamart
+    what: prometheus
+  ports:
+  - protocol: TCP
+    port: 9090
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: prometheus
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: prometheus
+  labels:
+    app: datamart
+    what: prometheus
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: datamart
+        what: prometheus
+    spec:
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
+        volumeMounts:
+        - mountPath: /prometheus
+          name: data
+      containers:
+      - name: prometheus
+        image: prom/prometheus
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - mountPath: /prometheus
+          name: data
+        - mountPath: /etc/prometheus/prometheus.yml
+          subPath: prometheus
+          name: config
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: prometheus
+      - name: config
+        configMap:
+          name: monitoring
+
+
+
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  labels:
+    app: datamart
+    what: grafana
+spec:
+  selector:
+    app: datamart
+    what: grafana
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 3000
+    nodePort: 30030
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: grafana
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: grafana
+  labels:
+    app: datamart
+    what: grafana
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: datamart
+        what: grafana
+    spec:
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 472:472 /grafana"]
+        volumeMounts:
+        - mountPath: /grafana
+          name: data
+      containers:
+      - name: grafana
+        image: grafana/grafana
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - mountPath: /var/lib/grafana
+          name: data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: grafana

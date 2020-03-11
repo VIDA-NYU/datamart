@@ -112,6 +112,12 @@ class Coordinator(object):
         self.channel = await connection.channel()
         await self.channel.set_qos(prefetch_count=1)
 
+        # Declare profiling exchange (to publish datasets via upload)
+        self.profile_exchange = await self.channel.declare_exchange(
+            'profile',
+            aio_pika.ExchangeType.FANOUT,
+        )
+
         # Register to datasets exchange
         datasets_exchange = await self.channel.declare_exchange(
             'datasets',
