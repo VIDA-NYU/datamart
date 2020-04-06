@@ -1160,7 +1160,7 @@ def parse_query_variables(data, tabular_variables=None):
 
 def get_augmentation_search_results(es, lazo_client, data_profile,
                                     query_args_main, query_args_sup,
-                                    tabular_variables, score_threshold,
+                                    tabular_variables,
                                     dataset_id=None, join=True, union=True):
     join_results = []
     union_results = []

@@ -33,9 +33,6 @@ from .search import TOP_K_SIZE, ClientError, parse_query, \
 logger = logging.getLogger(__name__)
 
 
-SCORE_THRESHOLD = 0.0
-
-
 BUCKETS = [0.5, 1.0, 5.0, 10.0, 20.0, 30.0, 60.0, 120.0, 300.0, 600.0]
 
 PROM_PROFILE_TIME = prometheus_client.Histogram('req_profile_seconds',
@@ -256,7 +253,6 @@ class Search(BaseHandler, GracefulHandler, ProfilePostedData):
                 query_args_main,
                 query_args_sup,
                 tabular_variables,
-                SCORE_THRESHOLD
             )
         results = [enhance_metadata(result) for result in results]
 
@@ -441,7 +437,6 @@ class Download(BaseDownload, GracefulHandler, ProfilePostedData):
                 query_args_main=None,
                 query_args_sup=None,
                 tabular_variables=None,
-                score_threshold=SCORE_THRESHOLD,
                 dataset_id=task['id'],
                 union=False
             )
@@ -547,7 +542,6 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
                 query_args_main=None,
                 query_args_sup=None,
                 tabular_variables=None,
-                score_threshold=SCORE_THRESHOLD,
                 dataset_id=task['id'],
                 union=False
             )
