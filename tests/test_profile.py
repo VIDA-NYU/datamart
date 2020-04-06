@@ -146,33 +146,6 @@ class TestTypes(unittest.TestCase):
                 self.assertFalse(match(elem),
                                  "Shouldn't have matched: %s" % elem)
 
-    def test_phone(self):
-        positive = '''\
-        +1 347 123 4567
-        1 347 123 4567
-        13471234567
-        +13471234567
-        +1 (347) 123 4567
-        (347)123-4567
-        +1.347-123-4567
-        347-123-4567
-        +33 6 12 34 56 78
-        06 12 34 56 78
-        +1.347123456
-        347.123.4567
-        '''
-        negative = '''\
-        -3471234567
-        12.3
-        +145
-        -
-        '''
-        self.do_test(
-            profile_types._re_phone.match,
-            positive, negative,
-        )
-        self.assertFalse(profile_types._re_phone.match(''))
-
     def test_ints(self):
         positive = '''\
         12

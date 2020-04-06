@@ -650,11 +650,7 @@ def get_columns_by_type(data_profile, filter_=()):
         # ignoring 'd3mIndex'
         if name == 'd3mIndex':
             continue
-        # ignoring phone numbers
-        semantic_types = [
-            sem for sem in column['semantic_types']
-            if types.PHONE_NUMBER not in sem
-        ]
+        semantic_types = column['semantic_types']
         for semantic_type in semantic_types:
             if semantic_type not in output:
                 output[semantic_type] = []

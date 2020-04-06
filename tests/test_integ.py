@@ -2061,8 +2061,6 @@ daily_metadata = {
             'structural_type': 'http://schema.org/Text',
             'semantic_types': [
                 'http://schema.org/DateTime',
-                # FIXME: This is correct by our rules, but not a great outcome
-                'https://metadata.datadrivendiscovery.org/types/PhoneNumber',
             ],
             'num_distinct_values': 30,
             'mean': lambda n: round(n) == 1557230400.0,

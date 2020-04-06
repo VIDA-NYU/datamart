@@ -16,13 +16,6 @@ _re_float = re.compile(r'^[+-]?'
                        r'(?:\.[0-9]+)'
                        r')'
                        r'(?:[Ee][0-9]+)?$')
-_re_phone = re.compile(r'^'
-                       r'(?:\+[0-9]{1,3})?'  # Optional country prefix
-                       r'(?=(?:[() .-]*[0-9]){6,11}$)'  # 6-11 digits
-                       r'(?:[ .]?\([0-9]{3}\))?'  # Area code in parens
-                       r'(?:[ .]?[0-9]{1,12})'  # First group of digits
-                       r'(?:[ .-][0-9]{1,10}){0,5}'  # More groups of digits
-                       r'$')
 _re_whitespace = re.compile(r'\s')
 
 
@@ -154,14 +147,5 @@ def identify_types(array, name):
 
         if len(parsed_dates) >= threshold:
             semantic_types_dict[types.DATE_TIME] = parsed_dates
-
-    # Identify phone numbers
-    num_phones = 0
-    for elem in array:
-        if _re_phone.match(elem) is not None:
-            num_phones += 1
-
-    if structural_type != types.MISSING_DATA and num_phones >= threshold:
-        semantic_types_dict[types.PHONE_NUMBER] = None
 
     return structural_type, semantic_types_dict, column_meta
