@@ -637,21 +637,18 @@ def get_joinable_datasets(es, lazo_client, data_profile, dataset_id=None,
     return results
 
 
-def get_column_information(data_profile, filter_=()):
+def get_columns_by_type(data_profile, filter_=()):
     """
-    Retrieve information about the columns (name and type) of a dataset.
-
+    Retrieve a mapping of types to column names for a dataset.
     """
 
     output = dict()
-    column_index = -1
-    for column in data_profile['columns']:
-        column_index += 1
+    for column_index, column in enumerate(data_profile['columns']):
         name = column['name']
         if filter_ and column_index not in filter_:
             continue
         # ignoring 'd3mIndex'
-        if 'd3mIndex' in name:
+        if name == 'd3mIndex':
             continue
         # ignoring phone numbers
         semantic_types = [
@@ -686,7 +683,7 @@ def get_unionable_datasets(es, data_profile, dataset_id=None,
         raise TypeError("Either a dataset id or a data profile "
                         "must be provided for the union")
 
-    main_dataset_columns = get_column_information(
+    main_dataset_columns = get_columns_by_type(
         data_profile=data_profile,
         filter_=tabular_variables
     )
