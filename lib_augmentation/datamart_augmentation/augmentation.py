@@ -189,6 +189,10 @@ def check_temporal_resolution(data):
             return 'day'
 
 
+def _first(series):
+    return series.iloc[0]
+
+
 def _sum(series):
     """Variant of numpy.sum() that returns nan for all-nan array.
 
@@ -201,7 +205,19 @@ def _sum(series):
         return np.nan
 
 
-def perform_aggregations(data, original_columns):
+AGGREGATION_FUNCTIONS = {
+    'first': pd.NamedAgg('first', _first),
+    'mean': pd.NamedAgg('mean', np.mean),
+    'sum': pd.NamedAgg('sum', _sum),
+    'max': pd.NamedAgg('max', np.max),
+    'min': pd.NamedAgg('min', np.min),
+}
+
+
+def perform_aggregations(
+    data, original_columns,
+    agg_functions=None, augment_columns_name=None,
+):
     """Performs group by on dataset after join, to keep the shape of the
     new, augmented dataset the same as the original, input data.
     """
@@ -210,27 +226,48 @@ def perform_aggregations(data, original_columns):
         col: idx for idx, col in enumerate(data.columns)
     }
 
-    def first(series):
-        return series.iloc[0]
-
     start = time.perf_counter()
     original_columns_set = set(original_columns)
+
+    provided_agg_functions = agg_functions
+    if provided_agg_functions:
+        provided_agg_functions = {
+            # Columns might have been renamed if conflicting, deal with that
+            augment_columns_name[col]:
+                # Turn single value into list
+                [funcs] if isinstance(funcs, str) else funcs
+            for col, funcs in provided_agg_functions.items()
+        }
+
     agg_functions = dict()
     for column in data.columns:
         if column == UNIQUE_INDEX_KEY or column in original_columns_set:
             # Just pick the first value
             # (they are all the same, from a single row in the original data)
-            agg_functions[column] = [pd.NamedAgg('first', first)]
+            agg_functions[column] = ['first']
+        elif provided_agg_functions:
+            try:
+                funcs = provided_agg_functions[column]
+            except KeyError:
+                pass
+            else:
+                agg_functions[column] = (
+                    [funcs] if isinstance(funcs, str)
+                    else funcs
+                )
         else:
             if ('int' in str(data.dtypes[column]) or
                     'float' in str(data.dtypes[column])):
-                agg_functions[column] = [
-                    pd.NamedAgg('mean', np.mean), pd.NamedAgg('sum', _sum),
-                    pd.NamedAgg('max', np.max), pd.NamedAgg('min', np.min),
-                ]
+                agg_functions[column] = ['mean', 'sum', 'max', 'min']
             else:
                 # Just pick the first value
-                agg_functions[column] = [pd.NamedAgg('first', first)]
+                agg_functions[column] = ['first']
+
+    # Resolve names into functions using AGGREGATION_FUNCTIONS map
+    agg_functions = {
+        col: [AGGREGATION_FUNCTIONS[name] for name in names]
+        for col, names in agg_functions.items()
+    }
 
     # Perform group-by
     data = data.groupby(by=[UNIQUE_INDEX_KEY]).agg(agg_functions)
@@ -262,7 +299,8 @@ CHUNK_SIZE_ROWS = 10000
 def join(original_data, augment_data_path, original_metadata, augment_metadata,
          destination_csv,
          left_columns, right_columns,
-         how='left', columns=None, return_only_datamart_data=False):
+         how='left', columns=None, agg_functions=None,
+         return_only_datamart_data=False):
     """
     Performs a join between original_data (pandas.DataFrame)
     and augment_data (pandas.DataFrame) using left_columns and right_columns.
@@ -366,6 +404,8 @@ def join(original_data, augment_data_path, original_metadata, augment_metadata,
     join_ = pd.concat(join_)
     logger.info("Join completed in %.4fs", time.perf_counter() - start)
 
+    intersection = set(original_data.columns).intersection(set(first_augment_data.columns))
+
     # qualities
     qualities_list = []
 
@@ -374,7 +414,6 @@ def join(original_data, augment_data_path, original_metadata, augment_metadata,
         join_.drop([UNIQUE_INDEX_KEY], axis=1, inplace=True)
 
         # drop columns from original data
-        intersection = set(original_data.columns).intersection(set(first_augment_data.columns))
         drop_columns = list(intersection)
         drop_columns.extend(set(original_data.columns).difference(intersection))
         join_.drop(drop_columns, axis=1, inplace=True)
@@ -388,10 +427,18 @@ def join(original_data, augment_data_path, original_metadata, augment_metadata,
         join_.dropna(axis=0, how='all', inplace=True)
 
     else:
+        # map column names for the augmentation data
+        augment_columns_map = {
+            name: name + '_r' if name in intersection else name
+            for name in first_augment_data.columns
+        }
+
         # aggregations
         join_ = perform_aggregations(
             join_,
             list(original_data.columns),
+            agg_functions,
+            augment_columns_map,
         )
 
         # drop unique index
@@ -425,12 +472,10 @@ def join(original_data, augment_data_path, original_metadata, augment_metadata,
             column['name'] + '_r'
         ]
         # agg names
-        all_names = ['sum ' + name for name in names]
-        all_names += ['mean ' + name for name in names]
-        all_names += ['max ' + name for name in names]
-        all_names += ['min ' + name for name in names]
-        all_names += ['first ' + name for name in names]
-        all_names += names
+        all_names = itertools.chain(names, (
+            agg + ' ' + name
+            for agg, name in itertools.product(AGGREGATION_FUNCTIONS, names)
+        ))
         for name in all_names:
             column_metadata = copy.deepcopy(column)
             column_metadata['name'] = name
