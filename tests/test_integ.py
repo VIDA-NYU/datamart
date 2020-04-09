@@ -1276,6 +1276,141 @@ class TestAugment(DatamartTest):
                 },
             )
 
+    def test_agg_join_specific_functions(self):
+        meta = self.datamart_get(
+            '/metadata/' + 'datamart.test.agg'
+        )
+        meta = meta.json()['metadata']
+
+        task = {
+            'id': 'datamart.test.agg',
+            'metadata': meta,
+            'score': 1.0,
+            'augmentation': {
+                'left_columns': [[0]],
+                'left_columns_names': [['id']],
+                'right_columns': [[0]],
+                'right_columns_names': [['id']],
+                'type': 'join',
+                'agg_functions': {
+                    'work': 'count',
+                    'salary': ['first', 'sum', 'max'],
+                }
+            },
+            'supplied_id': None,
+            'supplied_resource_id': None
+        }
+
+        with data('agg_aug.csv') as agg_aug:
+            response = self.datamart_post(
+                '/augment',
+                files={
+                    'task': json.dumps(task).encode('utf-8'),
+                    'data': agg_aug,
+                },
+            )
+        self.assertEqual(response.headers['Content-Type'], 'application/zip')
+        self.assertTrue(
+            response.headers['Content-Disposition'].startswith('attachment')
+        )
+        zip_ = zipfile.ZipFile(io.BytesIO(response.content))
+        zip_.testzip()
+        self.assertEqual(
+            set(zip_.namelist()),
+            {'datasetDoc.json', 'tables/learningData.csv'},
+        )
+        with zip_.open('tables/learningData.csv') as table:
+            self.assertCsvEqualNoOrder(
+                table.read().decode('utf-8'),
+                'id,location,count work,first salary,sum salary,max salary',
+                [
+                    '30,korea,2,200.0,300.0,200.0',
+                    '40,brazil,1,,,',
+                    '70,usa,2,,600.0,600.0',
+                    '80,canada,1,200.0,200.0,200.0',
+                    '100,france,2,300.0,500.0,300.0',
+                ],
+            )
+        with zip_.open('datasetDoc.json') as meta_fp:
+            meta = json.load(meta_fp)
+            self.assertJson(
+                meta,
+                {
+                    'about': {
+                        'approximateSize': '185 B',
+                        'datasetID': lambda s: len(s) == 32,
+                        'datasetName': lambda s: len(s) == 32,
+                        'datasetSchemaVersion': '4.0.0',
+                        'datasetVersion': '1.0',
+                        'license': 'unknown',
+                        'redacted': False,
+                    },
+                    'dataResources': [
+                        {
+                            'columns': [
+                                {
+                                    'colIndex': 0,
+                                    'colName': 'id',
+                                    'colType': 'integer',
+                                    'role': ['attribute'],
+                                },
+                                {
+                                    'colIndex': 1,
+                                    'colName': 'location',
+                                    'colType': 'string',
+                                    'role': ['attribute'],
+                                },
+                                {
+                                    'colIndex': 2,
+                                    'colName': 'count work',
+                                    'colType': 'boolean',
+                                    'role': ['attribute'],
+                                },
+                                {
+                                    'colIndex': 3,
+                                    'colName': 'first salary',
+                                    'colType': 'integer',
+                                    'role': ['attribute'],
+                                },
+                                {
+                                    'colIndex': 4,
+                                    'colName': 'sum salary',
+                                    'colType': 'real',
+                                    'role': ['attribute'],
+                                },
+                                {
+                                    'colIndex': 5,
+                                    'colName': 'max salary',
+                                    'colType': 'real',
+                                    'role': ['attribute'],
+                                },
+                            ],
+                            'isCollection': False,
+                            'resFormat': {'text/csv': ["csv"]},
+                            'resID': 'learningData',
+                            'resPath': 'tables/learningData.csv',
+                            'resType': 'table',
+                        },
+                    ],
+                    'qualities': [
+                        {
+                            'qualName': 'augmentation_info',
+                            'qualValue': {
+                                'augmentation_type': 'join',
+                                'nb_rows_after': 5,
+                                'nb_rows_before': 5,
+                                'new_columns': [
+                                    'count work', 'first salary',
+                                    'sum salary', 'max salary',
+                                ],
+                                'removed_columns': [],
+                            },
+                            'qualValueType': 'dict',
+                        },
+                    ],
+                },
+            )
+
     def test_lazo_join(self):
         meta = self.datamart_get(
             '/metadata/' + 'datamart.test.lazo'
