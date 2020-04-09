@@ -294,15 +294,6 @@ def join(original_data, augment_data_path, original_metadata, augment_metadata,
 
     logger.info("Performing join...")
 
-    # join columns
-    augment_join_columns = list()
-    for left, right in zip(left_columns, right_columns):
-        left_name = original_data.columns[left[0]]
-        right_name = augment_data_columns[right[0]]
-        if right_name == left_name:
-            right_name += '_r'
-        augment_join_columns.append(right_name)
-
     # Stream the data in
     augment_data_chunks = pd.read_csv(
         augment_data_path,
@@ -376,20 +367,18 @@ def join(original_data, augment_data_path, original_metadata, augment_metadata,
     logger.info("Join completed in %.4fs", time.perf_counter() - start)
 
     # qualities
-    qualities_list = list()
+    qualities_list = []
 
     if return_only_datamart_data:
         # drop unique index
         join_.drop([UNIQUE_INDEX_KEY], axis=1, inplace=True)
 
         # drop columns from original data
-        drop_columns = list()
         intersection = set(original_data.columns).intersection(set(first_augment_data.columns))
-        if len(intersection) > 0:
-            drop_columns = list(intersection)
-        drop_columns += list(set(original_data.columns).difference(intersection))
+        drop_columns = list(intersection)
+        drop_columns.extend(set(original_data.columns).difference(intersection))
         join_.drop(drop_columns, axis=1, inplace=True)
-        if len(intersection) > 0:
+        if intersection:
             rename = dict()
             for column in intersection:
                 rename[column + '_r'] = column
