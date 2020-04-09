@@ -285,7 +285,7 @@ def perform_aggregations(
 
     # Rename columns
     data.columns = [
-        col[0] if col[1] == 'first'
+        col[0] if col[1] == 'first' and len(agg_functions[col[0]]) <= 1
         else ' '.join(col[::-1]).strip()
         for col in data.columns
     ]
