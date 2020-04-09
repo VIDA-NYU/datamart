@@ -211,6 +211,7 @@ AGGREGATION_FUNCTIONS = {
     'sum': pd.NamedAgg('sum', _sum),
     'max': pd.NamedAgg('max', np.max),
     'min': pd.NamedAgg('min', np.min),
+    'count': pd.NamedAgg('count', len),
 }
 
 
