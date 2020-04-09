@@ -633,6 +633,7 @@ def augment(data, newdata, metadata, task, columns=None, destination=None,
             task['augmentation']['left_columns'],
             task['augmentation']['right_columns'],
             columns=columns,
+            agg_functions=task['augmentation'].get('agg_functions'),
             return_only_datamart_data=return_only_datamart_data,
         )
     elif task['augmentation']['type'] == 'union':
