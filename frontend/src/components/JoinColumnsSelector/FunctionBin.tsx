@@ -49,7 +49,8 @@ const FunctionBin: React.FC<FunctionBinProps> = ({ fn, label }) => {
                 <i className="small text-primary">{label}</i>
               ) : (
                 <>
-                  {fn.toUpperCase()}(<Icon.Hash className="feather text-primary" />)
+                  {fn.toUpperCase()}(
+                  <Icon.Hash className="feather text-primary" />)
                 </>
               )}
             </>

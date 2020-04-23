@@ -8,9 +8,9 @@ import { FunctionBin } from './FunctionBin';
 
 const ItemType = 'badge';
 
-const NumberAggFunctions = ['first', 'mean', 'sum', 'max', 'min', 'count'];
-const StringAggFunctions = ['first'];
-const AllAggFunctions = '_all';
+const NUMBER_AGG_FUNCTIONS = ['first', 'mean', 'sum', 'max', 'min', 'count'];
+const STRING_AGG_FUNCTIONS = ['first'];
+const ALL_AGG_FUNCTIONS = '_all';
 
 const badgeBinStyle = (background: string): React.CSSProperties => ({
   border: '1px solid #c0c0c0',
@@ -58,16 +58,16 @@ const BadgeBin: React.FC<BadgeBinProps> = ({ uniqueBinId, columns }) => {
       <div ref={drop} style={badgeBinStyle(background)}>
         <div className={isDragging ? 'd-flex flex-wrap' : 'd-none'}>
           <div className={isStringColumn ? 'd-flex flex-wrap' : 'd-none'}>
-            {StringAggFunctions.map(fn => (
+            {STRING_AGG_FUNCTIONS.map(fn => (
               <FunctionBin fn={fn} key={`bin-${uniqueBinId}-fn-${fn}`} />
             ))}
           </div>
           <div className={isNumberColumn ? 'd-flex flex-wrap' : 'd-none'}>
-            {NumberAggFunctions.map(fn => (
+            {NUMBER_AGG_FUNCTIONS.map(fn => (
               <FunctionBin fn={fn} key={`bin-${uniqueBinId}-fn-${fn}`} />
             ))}
           </div>
-          <FunctionBin fn={AllAggFunctions} label="All functions" />
+          <FunctionBin fn={ALL_AGG_FUNCTIONS} label="All functions" />
         </div>
         {isActive ? (
           <span className="small">Release to drop!</span>
@@ -93,12 +93,12 @@ const BadgeBin: React.FC<BadgeBinProps> = ({ uniqueBinId, columns }) => {
 
 interface DraggableBadgeProps {
   column: ColumnMetadata;
-  onDrop: (column: ColumnMetadata, agg_function: string) => void;
+  onDrop: (column: ColumnMetadata, aggFunction: string) => void;
 }
 
 const DraggableBadge: React.FC<DraggableBadgeProps> = ({ column, onDrop }) => {
   const [{ isDragging }, drag] = useDrag({
-    item: { column: column, type: ItemType },
+    item: { column, type: ItemType },
     end: (item: ColumnMetadata | undefined, monitor: DragSourceMonitor) => {
       const dropResult = monitor.getDropResult();
       if (item && dropResult) {
@@ -139,20 +139,20 @@ class JoinColumnsSelector extends React.Component<
     this.state = { columns: [] };
   }
 
-  addColumn(column: ColumnMetadata, agg_function: string) {
+  addColumn(column: ColumnMetadata, aggFunction: string) {
     this.setState({
-      columns: [...this.state.columns, { column, agg_function }],
+      columns: [...this.state.columns, { column, agg_function: aggFunction }],
     });
   }
 
-  handleDrop(column: ColumnMetadata, agg_function: string) {
-    if (!agg_function || agg_function === AllAggFunctions) {
+  handleDrop(column: ColumnMetadata, aggFunction: string) {
+    if (!aggFunction || aggFunction === ALL_AGG_FUNCTIONS) {
       const functionNames = column.structural_type.endsWith('Text')
-        ? StringAggFunctions // string column
-        : NumberAggFunctions; // number column
+        ? STRING_AGG_FUNCTIONS // string column
+        : NUMBER_AGG_FUNCTIONS; // number column
       functionNames.forEach(fn => this.addColumn(column, fn));
     } else {
-      this.addColumn(column, agg_function);
+      this.addColumn(column, aggFunction);
     }
   }
 
