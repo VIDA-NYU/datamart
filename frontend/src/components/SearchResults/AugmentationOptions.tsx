@@ -4,6 +4,8 @@ import { SearchResult, AugmentationInfo } from '../../api/types';
 import * as api from '../../api/rest';
 import { SearchQuery } from '../../api/rest';
 import { triggerFileDownload, cloneObject } from '../../utils';
+import { JoinColumnsSelector } from '../JoinColumnsSelector/JoinColumnsSelector';
+import { ColumnBadge, SimpleColumnBadge } from '../Badges/Badges';
 
 interface AugmentationOptionsProps {
   hit: SearchResult;
@@ -118,6 +120,43 @@ class AugmentationOptions extends React.PureComponent<
     );
   }
 
+  renderMergeColumns(
+    columns: Array<{
+      leftColumn: string;
+      rightColumn: string;
+      key: string;
+      idx: number;
+    }>,
+    hit: SearchResult
+  ) {
+    return columns.map((c, i) => {
+      const rightMetadata = hit.metadata.columns.find(
+        m => m.name === c.rightColumn
+      );
+      return (
+        <div className="form-check ml-2" key={`div-aug-${i}`}>
+          <input
+            className="form-check-input"
+            type="checkbox"
+            value={c.idx}
+            checked={this.state.checked[c.idx]}
+            id={`checkbox-${c.key}`}
+            onChange={e => this.handleChange(e)}
+          />
+          <label className="form-check-label" htmlFor={`checkbox-${c.key}`}>
+            <SimpleColumnBadge name={c.leftColumn} />
+            <span className="ml-1 mr-1">and</span>
+            {rightMetadata ? (
+              <ColumnBadge column={rightMetadata} />
+            ) : (
+              <SimpleColumnBadge name={c.rightColumn} />
+            )}
+          </label>
+        </div>
+      );
+    });
+  }
+
   render() {
     const { hit } = this.props;
     if (!hit.augmentation || hit.augmentation.type === 'none') {
@@ -128,33 +167,19 @@ class AugmentationOptions extends React.PureComponent<
     const columns = getAugmentationColumns(hit.augmentation);
 
     return (
-      <div className="mt-3">
-        <b>
+      <div className="d-flex flex-column mt-3">
+        <h6>
           Augmentation{' '}
-          <span style={{ textTransform: 'uppercase' }}>({type})</span>:
+          <span style={{ textTransform: 'uppercase' }}>({type})</span>
+        </h6>
+        <b>
+          <span style={{ textTransform: 'capitalize' }}>{type}</span> on:
         </b>
-        {columns.map((c, i) => (
-          <div className="form-check ml-2" key={`div-aug-${i}`}>
-            <input
-              className="form-check-input"
-              type="checkbox"
-              value={c.idx}
-              checked={this.state.checked[c.idx]}
-              id={`checkbox-${c.key}`}
-              onChange={e => this.handleChange(e)}
-            />
-            <label className="form-check-label" htmlFor={`checkbox-${c.key}`}>
-              <span className="badge badge-pill badge-secondary mr-1">
-                {c.leftColumn}
-              </span>
-              and
-              <span className="badge badge-pill badge-secondary ml-1">
-                {c.rightColumn}
-              </span>
-            </label>
-          </div>
-        ))}
-        {this.renderAugmentButton(hit, type)}
+        {this.renderMergeColumns(columns, hit)}
+        <div>
+          <JoinColumnsSelector hit={hit} />
+        </div>
+        <div>{this.renderAugmentButton(hit, type)}</div>
       </div>
     );
   }

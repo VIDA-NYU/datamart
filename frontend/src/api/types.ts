@@ -2,12 +2,17 @@ export interface AugmentationTask {
   data: SearchResult;
 }
 
+type AggFunctions = 'first' | 'mean' | 'sum' | 'max' | 'min' | 'count';
+
 export interface AugmentationInfo {
   type: string;
   left_columns: number[][];
   left_columns_names: string[][];
   right_columns: number[][];
   right_columns_names: string[][];
+  agg_functions?: {
+    [column: string]: AggFunctions[];
+  };
 }
 
 export interface SpatialCoverage {
@@ -23,7 +28,8 @@ export interface SpatialCoverage {
 }
 
 export interface Metadata {
-  filename: string;
+  id: string;
+  filename?: string;
   name: string;
   description: string;
   size: number;
@@ -35,14 +41,18 @@ export interface Metadata {
   sample: string;
   source: string;
   version: string;
-  spatial_coverage: SpatialCoverage[];
+  spatial_coverage?: SpatialCoverage[];
 }
 
 export interface ColumnMetadata {
   name: string;
-  num_distinct_values: number;
   structural_type: string;
   semantic_types: string[];
+  num_distinct_values?: number;
+  coverage?: Array<{}>;
+  mean?: number;
+  stddev?: number;
+  plot?: {};
 }
 
 export interface SearchResult {
@@ -51,8 +61,8 @@ export interface SearchResult {
   // join_columns: Array<[string, string]>;
   metadata: Metadata;
   augmentation?: AugmentationInfo;
-  supplied_id: string;
-  supplied_resource_id: string;
+  supplied_id: string | null;
+  supplied_resource_id: string | null;
   d3m_dataset_description: {};
   sample: string[][];
 }

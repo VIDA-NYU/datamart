@@ -1,9 +1,21 @@
 .badge-group > * {
   display: inline-flex;
-  margin-left: 0.25rem;
+  margin-right: 0.25rem;
 }
 
-.badge-group > *:first-child {
+.badge-group > *:last-child {
   margin-left: 0px;
 }
 
+.badge-column, .badge-numerical, .badge-textual {
+  background-color: #f0f0f0;
+  font-size: .7rem;
+}
+
+.badge-numerical svg {
+  color: #1ab082;
+}
+
+.badge-textual svg {
+  color: #4d96b2;
+}
