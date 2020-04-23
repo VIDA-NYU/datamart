@@ -126,7 +126,7 @@ datamart_core = "*"
 datamart_materialize = "*"
 datamart_profiler = "*"
 elasticsearch = ">=7.0,<8.0"
-lazo-index-service = "0.5"
+lazo-index-service = "0.4"
 prometheus-async = "*"
 prometheus_client = "*"
 redis = ">=3.4,<4.0"
@@ -192,7 +192,7 @@ version = "0.0"
 [package.dependencies]
 aio-pika = "*"
 elasticsearch = ">=7.0,<8.0"
-lazo-index-service = "0.5"
+lazo-index-service = "0.4"
 prometheus_client = "*"
 
 [package.source]
@@ -247,7 +247,7 @@ python-versions = "*"
 version = "0.5.8"
 
 [package.dependencies]
-lazo-index-service = "0.5"
+lazo-index-service = "0.4"
 numpy = "*"
 pandas = "*"
 prometheus_client = "*"
@@ -274,7 +274,7 @@ datamart_core = "*"
 datamart_materialize = "*"
 datamart_profiler = "*"
 elasticsearch = ">=7.0,<8.0"
-lazo-index-service = "0.5"
+lazo-index-service = "0.4"
 prometheus_client = "*"
 xlrd = "*"
 
@@ -449,11 +449,11 @@ description = "API for accessing the Lazo index."
 name = "lazo-index-service"
 optional = false
 python-versions = "*"
-version = "0.5"
+version = "0.4"
 
 [package.dependencies]
-grpcio = ">=1.21.1,<1.22.0"
-protobuf = ">=3.8.0,<3.9.0"
+grpcio = "1.21.1"
+protobuf = "3.8.0"
 
 [[package]]
 category = "main"
@@ -1073,8 +1073,8 @@ jsonschema = [
     {file = "jsonschema-3.2.0.tar.gz", hash = "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"},
 ]
 lazo-index-service = [
-    {file = "lazo-index-service-0.5.tar.gz", hash = "sha256:88378ac213f6ccd63ef5620685490baffc877164dd60bcd190fa08d2dbc1c522"},
-    {file = "lazo_index_service-0.5-py2-none-any.whl", hash = "sha256:63863685d24ca2cfb887df058adde8b05d0b6c28bb7b4c1d5904db4c8bf3e8f7"},
+    {file = "lazo-index-service-0.4.tar.gz", hash = "sha256:38878b62e3ea1076579cb42a2d3ceeacddc5de5181f296db76e5f9e18cde7223"},
+    {file = "lazo_index_service-0.4-py3-none-any.whl", hash = "sha256:d8b053ed60935f4729c8094b33003b2c05b26bd65e1bc21c374eadf309874324"},
 ]
 markupsafe = [
     {file = "MarkupSafe-1.1.1-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:09027a7803a62ca78792ad89403b1b7a73a01c8cb65909cd876f7fcebd79b161"},

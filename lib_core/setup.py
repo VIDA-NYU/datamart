@@ -8,7 +8,7 @@ os.chdir(os.path.abspath(os.path.dirname(__file__)))
 req = [
     'aio-pika',
     'elasticsearch~=7.0',
-    'lazo-index-service==0.5',
+    'lazo-index-service==0.4',
     'prometheus_client',
 ]
 setup(name='datamart_core',
