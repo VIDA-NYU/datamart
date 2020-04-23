@@ -95,10 +95,17 @@ class SearchApp extends React.Component<{}, AppState> {
     filterId: string,
     state?: TemporalVariable | GeoSpatialVariable | File | string[]
   ) {
+    console.warn('Update filter state:');
+    console.warn(this.state.filters);
     const filter = this.state.filters.find(f => f.id === filterId);
     if (filter) {
+      console.warn('Filter state');
+      console.warn(state);
       filter.state = state;
       this.setState({ filters: [...this.state.filters] });
+      if (state) {
+        this.submitQuery();
+      }
     } else {
       console.warn(
         `Requested to update filter state with id=[${filterId} which does not exist.]`
@@ -314,6 +321,7 @@ class SearchApp extends React.Component<{}, AppState> {
                   searchQuery={this.state.searchQuery}
                   searchState={this.state.searchState}
                   searchResponse={this.state.searchResponse}
+                  onSelectedFileChange={f => this.updateFilterState(generateRandomId(), f)}
                 />
               </div>
             </div>

@@ -11,6 +11,7 @@ interface SearchHitProps {
   searchQuery: SearchQuery;
   hit: SearchResult;
   onSearchHitExpand: (hit: SearchResult) => void;
+  onSelectedFileChange: (file: File) => void;
 }
 
 interface SearchHitState {
@@ -20,10 +21,12 @@ interface SearchHitState {
 function DownloadViewDetails(props: {
   id: string;
   onSearchHitExpand: () => void;
+  handleSelectedFile: () => void;
 }) {
   return (
     <div className="mt-2">
       <a
+        id={'id_csv_file-' + props.id}
         className="btn btn-sm btn-outline-primary"
         href={`${API_URL}/download/${props.id}`}
       >
@@ -34,6 +37,12 @@ function DownloadViewDetails(props: {
         onClick={props.onSearchHitExpand}
       >
         <Icon.Info className="feather" /> View Details
+      </button>
+      <button
+        className="btn btn-sm btn-outline-primary ml-2"
+        onClick={props.handleSelectedFile}
+      >
+        <Icon.Search className="feather" /> Related datasets
       </button>
     </div>
   );
@@ -66,6 +75,20 @@ class SearchHit extends React.PureComponent<SearchHitProps, SearchHitState> {
     this.props.onSearchHitExpand(this.props.hit);
   }
 
+  handleSelectedFile(hit: SearchResult) {
+    console.warn('Search for datasets related to: ' + hit.id);
+    console.warn('Located at: ');
+    console.warn(`${API_URL}/download/${hit.id}`);
+    fetch(`${API_URL}/download/${hit.id}`)
+      .then(res => res.blob()) // Gets the response and returns it as a blob
+      .then(blob => {
+        console.warn('Blob');
+        console.warn(blob as File);
+        this.props.onSelectedFileChange(blob as File);
+        // Here, I use it to make an image appear on the page
+    });
+  }
+
   render() {
     const { hit, searchQuery } = this.props;
     return (
@@ -79,6 +102,7 @@ class SearchHit extends React.PureComponent<SearchHitProps, SearchHitState> {
           <DownloadViewDetails
             id={hit.id}
             onSearchHitExpand={this.onSearchHitExpand}
+            handleSelectedFile={() => this.handleSelectedFile(hit)}
           />
           <AugmentationOptions hit={hit} searchQuery={searchQuery} />
         </div>
