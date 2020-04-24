@@ -8,6 +8,7 @@ import {
 } from './components/AdvancedSearchBar/AdvancedSearchBar';
 import { DateFilter } from './components/DateFilter/DateFilter';
 import { RelatedFileFilter } from './components/RelatedFileFilter/RelatedFileFilter';
+import { RelatedDatasetFilter } from './components/RelatedFileFilter/RelatedDatasetFilter';
 import { GeoSpatialFilter } from './components/GeoSpatialFilter/GeoSpatialFilter';
 import { FilterContainer } from './components/FilterContainer/FilterContainer';
 import { SourceFilter } from './components/SourceFilter/SourceFilter';
@@ -15,6 +16,7 @@ import { SearchBar } from './components/SearchBar/SearchBar';
 import { SearchState } from './components/SearchResults/SearchState';
 import { SearchResults } from './components/SearchResults/SearchResults';
 import {
+  SearchResult,
   SearchResponse,
   FilterVariables,
   TemporalVariable,
@@ -95,17 +97,10 @@ class SearchApp extends React.Component<{}, AppState> {
     filterId: string,
     state?: TemporalVariable | GeoSpatialVariable | File | string[]
   ) {
-    console.warn('Update filter state:');
-    console.warn(this.state.filters);
     const filter = this.state.filters.find(f => f.id === filterId);
     if (filter) {
-      console.warn('Filter state');
-      console.warn(state);
       filter.state = state;
       this.setState({ filters: [...this.state.filters] });
-      if (state) {
-        this.submitQuery();
-      }
     } else {
       console.warn(
         `Requested to update filter state with id=[${filterId} which does not exist.]`
@@ -113,7 +108,7 @@ class SearchApp extends React.Component<{}, AppState> {
     }
   }
 
-  handleAddFilter(filterType: FilterType) {
+  handleAddFilter(filterType: FilterType, datasetResult?: SearchResult) {
     const filters = this.state.filters;
     if (
       filterType === FilterType.RELATED_FILE &&
@@ -128,13 +123,21 @@ class SearchApp extends React.Component<{}, AppState> {
       return;
     }
     const filterId = generateRandomId();
+    const filterComponent = datasetResult ? this.createFilterComponent(filterId, filterType, datasetResult)
+                            : this.createFilterComponent(filterId, filterType);
     filters.push({
       id: filterId,
       type: filterType,
       hidden: false,
-      ...this.createFilterComponent(filterId, filterType),
+      ...filterComponent,
     });
     this.setState({ filters: [...filters] });
+    if (datasetResult) {
+      console.warn('Searching for related datasets to : ' + datasetResult.id);
+      const queryByDatasetID = 'related:' + datasetResult.id
+      this.updateFilterState(filterId, [queryByDatasetID]);
+    }
+   
   }
 
   submitQuery() {
@@ -192,7 +195,8 @@ class SearchApp extends React.Component<{}, AppState> {
 
   createFilterComponent(
     filterId: string,
-    filterType: FilterType
+    filterType: FilterType,
+    datasetResult?: SearchResult
   ): { title: string; component: JSX.Element; icon: Icon.Icon } {
     switch (filterType) {
       case FilterType.TEMPORAL:
@@ -217,6 +221,17 @@ class SearchApp extends React.Component<{}, AppState> {
             />
           ),
         };
+      case FilterType.RELATED_DATASETS:
+          return {
+            title: 'Related File',
+            icon: Icon.File,
+            component: (
+              <RelatedDatasetFilter
+                key={`relatedfilefilter-${filterId}`}
+                datasetResult={datasetResult}
+              />
+            ),
+          };
       case FilterType.GEO_SPATIAL:
         return {
           title: 'Geo-Spatial',
@@ -321,7 +336,7 @@ class SearchApp extends React.Component<{}, AppState> {
                   searchQuery={this.state.searchQuery}
                   searchState={this.state.searchState}
                   searchResponse={this.state.searchResponse}
-                  onSelectedFileChange={f => this.updateFilterState(generateRandomId(), f)}
+                  onAddFilter={(type, datasetResult) => this.handleAddFilter(type, datasetResult)}
                 />
               </div>
             </div>

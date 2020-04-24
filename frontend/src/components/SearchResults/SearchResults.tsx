@@ -6,12 +6,13 @@ import { SearchState } from './SearchState';
 import { Loading } from '../visus/Loading/Loading';
 import { HitInfoBox } from './HitInfoBox';
 import { SearchQuery } from '../../api/rest';
+import { FilterType } from '../AdvancedSearchBar/AdvancedSearchBar';
 
 interface SearchResultsProps {
   searchQuery: SearchQuery;
   searchState: SearchState;
   searchResponse?: SearchResponse;
-  onSelectedFileChange: (file: File) => void;
+  onAddFilter: (type: FilterType, datasetResult: SearchResult) => void;
 }
 
 interface SearchResultsState {
@@ -86,7 +87,7 @@ class SearchResults extends React.PureComponent<
                   hit={hit}
                   key={idx}
                   onSearchHitExpand={hit => this.setState({ selectedHit: hit })}
-                  onSelectedFileChange={f => this.props.onSelectedFileChange(f)}
+                  onAddFilter={(type, datasetResult) => this.props.onAddFilter(type, datasetResult)}
                 />
               ))}
             </div>

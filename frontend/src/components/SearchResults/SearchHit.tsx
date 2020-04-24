@@ -6,12 +6,13 @@ import { SearchResult } from '../../api/types';
 import { Description, DataTypes, DatasetColumns } from './Metadata';
 import { AugmentationOptions } from './AugmentationOptions';
 import { SearchQuery } from '../../api/rest';
+import { FilterType } from '../AdvancedSearchBar/AdvancedSearchBar';
 
 interface SearchHitProps {
   searchQuery: SearchQuery;
   hit: SearchResult;
   onSearchHitExpand: (hit: SearchResult) => void;
-  onSelectedFileChange: (file: File) => void;
+  onAddFilter: (type: FilterType, datasetResult: SearchResult) => void;
 }
 
 interface SearchHitState {
@@ -76,17 +77,9 @@ class SearchHit extends React.PureComponent<SearchHitProps, SearchHitState> {
   }
 
   handleSelectedFile(hit: SearchResult) {
-    console.warn('Search for datasets related to: ' + hit.id);
-    console.warn('Located at: ');
-    console.warn(`${API_URL}/download/${hit.id}`);
-    fetch(`${API_URL}/download/${hit.id}`)
-      .then(res => res.blob()) // Gets the response and returns it as a blob
-      .then(blob => {
-        console.warn('Blob');
-        console.warn(blob as File);
-        this.props.onSelectedFileChange(blob as File);
-        // Here, I use it to make an image appear on the page
-    });
+    // var json = JSON.stringify(hit.sample);
+    // var file = new File([json], hit.id + '.csv', {type: 'text/csv'});
+    this.props.onAddFilter(FilterType.RELATED_DATASETS,  hit);
   }
 
   render() {

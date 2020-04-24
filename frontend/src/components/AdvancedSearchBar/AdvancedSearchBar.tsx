@@ -7,6 +7,7 @@ export enum FilterType {
   GEO_SPATIAL,
   RELATED_FILE,
   SOURCE,
+  RELATED_DATASETS
 }
 
 interface AdvancedSearchBarProps {
