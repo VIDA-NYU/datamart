@@ -3,7 +3,11 @@ import { useDrop, useDrag, DragSourceMonitor } from 'react-dnd';
 import { DndProvider } from 'react-dnd';
 import Backend from 'react-dnd-html5-backend';
 import { ColumnBadge, BadgeGroup } from '../Badges/Badges';
-import { SearchResult, ColumnMetadata } from '../../api/types';
+import {
+  SearchResult,
+  ColumnMetadata,
+  ColumnAggregations,
+} from '../../api/types';
 import { FunctionBin } from './FunctionBin';
 
 const ItemType = 'badge';
@@ -124,6 +128,7 @@ interface AggColumn {
 
 interface JoinColumnsSelectorProps {
   hit: SearchResult;
+  onChange: (columnAggregations: ColumnAggregations) => void;
 }
 
 interface JoinColumnsSelectorState {
@@ -145,15 +150,45 @@ class JoinColumnsSelector extends React.Component<
     });
   }
 
+  unique(functions: AggColumn[]): AggColumn[] {
+    const columns: {
+      [key: string]: AggColumn;
+    } = {};
+    functions.forEach(fn => {
+      const key = fn.column.name + fn.agg_function;
+      columns[key] = fn;
+    });
+    return Object.values(columns);
+  }
+
   handleDrop(column: ColumnMetadata, aggFunction: string) {
+    let functions;
     if (!aggFunction || aggFunction === ALL_AGG_FUNCTIONS) {
       const functionNames = column.structural_type.endsWith('Text')
         ? STRING_AGG_FUNCTIONS // string column
         : NUMBER_AGG_FUNCTIONS; // number column
-      functionNames.forEach(fn => this.addColumn(column, fn));
+      functions = functionNames.map(fn => ({ column, agg_function: fn }));
     } else {
-      this.addColumn(column, aggFunction);
+      functions = [{ column, agg_function: aggFunction }];
     }
+
+    functions = this.unique([...this.state.columns, ...functions]);
+
+    const columnAggregations: ColumnAggregations = {};
+    functions.forEach(fn => {
+      columnAggregations[fn.column.name] =
+        columnAggregations[fn.column.name] || [];
+      columnAggregations[fn.column.name].push(fn.agg_function);
+    });
+
+    this.setState(
+      {
+        columns: functions,
+      },
+      () => {
+        this.props.onChange(columnAggregations);
+      }
+    );
   }
 
   render() {

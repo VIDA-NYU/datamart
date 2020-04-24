@@ -2,7 +2,9 @@ export interface AugmentationTask {
   data: SearchResult;
 }
 
-type AggFunctions = 'first' | 'mean' | 'sum' | 'max' | 'min' | 'count';
+export interface ColumnAggregations {
+  [columnName: string]: string[];
+}
 
 export interface AugmentationInfo {
   type: string;
@@ -10,9 +12,7 @@ export interface AugmentationInfo {
   left_columns_names: string[][];
   right_columns: number[][];
   right_columns_names: string[][];
-  agg_functions?: {
-    [column: string]: AggFunctions[];
-  };
+  agg_functions?: ColumnAggregations;
 }
 
 export interface SpatialCoverage {
