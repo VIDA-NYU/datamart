@@ -13,6 +13,7 @@ services:
       memlock:
         soft: -1
         hard: -1
+    cpu_shares: 100
     ports:
       - 9200:9200
     volumes:
@@ -25,6 +26,7 @@ services:
       - '--es.cluster_settings'
       - '--es.indices'
       - '--es.indices_settings'
+    cpu_shares: 100
     ports:
       - 9114
   rabbitmq:
@@ -35,12 +37,14 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${AMQP_USER}
       - RABBITMQ_DEFAULT_PASS=${AMQP_PASSWORD}
+    cpu_shares: 100
     ports:
       - 8080:15672
       - 5672:5672
   redis:
     image: redis:5.0
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    cpu_shares: 100
     ports:
       - 6379
     volumes:
@@ -52,6 +56,7 @@ services:
       - PORT=50051
       - ELASTICSEARCH_HOST=elasticsearch
       - ELASTICSEARCH_PORT=9200
+    cpu_shares: 30
     ports:
       - 50051:50051
       - 8000
@@ -64,6 +69,7 @@ services:
       dockerfile: frontend/Dockerfile
     environment:
       - API_URL=${API_URL}
+    cpu_shares: 10
     ports:
       - 8001:80
   apiserver:
@@ -79,6 +85,7 @@ services:
       - LAZO_SERVER_HOST=lazo
       - LAZO_SERVER_PORT=50051
       - NOMINATIM_URL=${NOMINATIM_URL}
+    cpu_shares: 10
     ports:
       - 8002
     # CI: command: ["bash", "-c", "set -m; python -Wd -m coverage run --branch -p -m apiserver & PROCESS=$$!; trap \"kill -INT $$PROCESS\" INT TERM; wait $$PROCESS; wait $$PROCESS; cp .coverage* /cov/"]
@@ -95,6 +102,7 @@ services:
     ports:
       - 8002:80
       - 8081:8000
+    cpu_shares: 100
     volumes:
       - ./docker/haproxy.conf:/usr/local/etc/haproxy/haproxy.cfg:ro
     healthcheck:
@@ -113,6 +121,7 @@ services:
       - API_URL=${API_URL}
       - MAX_CACHE_BYTES=100000000000  # 100 GB
     # CI: command: ["bash", "-c", "set -m; python -Wd -m coverage run --branch -p -m coordinator & PROCESS=$$!; trap \"kill -INT $$PROCESS\" INT TERM; wait $$PROCESS; wait $$PROCESS; cp .coverage* /cov/"]
+    cpu_shares: 100
     ports:
       - 8003:8003
     volumes:
@@ -132,12 +141,14 @@ services:
       - LAZO_SERVER_PORT=50051
       - NOMINATIM_URL=${NOMINATIM_URL}
     # CI: command: ["bash", "-c", "set -m; python -Wd -m coverage run --branch -p -m profiler & PROCESS=$$!; trap \"kill -INT $$PROCESS\" INT TERM; wait $$PROCESS; wait $$PROCESS; cp .coverage* /cov/"]
+    cpu_shares: 10
     volumes:
       # CI: - ./cov:/cov
       - ./volumes/datasets:/datasets
       - ./volumes/cache:/cache
   prometheus:
     image: prom/prometheus
+    cpu_shares: 100
     ports:
       - 9090:9090
     volumes:
@@ -151,6 +162,7 @@ services:
       #- GF_SMTP_HOST=ip-of-the-host:25
       #- GF_SMTP_FROM_NAME=Datamart Development
       #- GF_SERVER_ROOT_URL=https://grafana.example.org/
+    cpu_shares: 100
     ports:
       - 3000:3000
     volumes:
@@ -167,6 +179,7 @@ services:
       - AMQP_PASSWORD=${AMQP_PASSWORD}
       - LAZO_SERVER_HOST=lazo
       - LAZO_SERVER_PORT=50051
+    cpu_shares: 10
     volumes:
       - ./volumes/datasets:/datasets
   test_discoverer:
@@ -182,6 +195,7 @@ services:
       - AMQP_PASSWORD=${AMQP_PASSWORD}
       - LAZO_SERVER_HOST=lazo
       - LAZO_SERVER_PORT=50051
+    cpu_shares: 10
     volumes:
       # CI: - ./cov:/cov
       - ./volumes/datasets:/datasets
@@ -189,6 +203,7 @@ services:
     build:
       context: .
       dockerfile: discovery/socrata/Dockerfile
+    cpu_shares: 10
     environment:
       - ELASTICSEARCH_HOSTS=elasticsearch:9200
       - AMQP_HOST=rabbitmq
@@ -210,3 +225,4 @@ services:
       - NOAA_TOKEN=${NOAA_TOKEN}
       - LAZO_SERVER_HOST=lazo
       - LAZO_SERVER_PORT=50051
+    cpu_shares: 10
