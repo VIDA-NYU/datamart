@@ -19,7 +19,9 @@ test:
     # Docker containers can't reach the local runner!
   script:
     - diff -u lib_core/datamart_core/types.py lib_profiler/datamart_profiler/types.py && diff -u lib_core/datamart_core/types.py lib_materialize/datamart_materialize/types.py
+    - date
     - /root/.poetry/bin/poetry install
+    - date
     - |
       # Check READMEs
       find . -name README.rst | while read i; do
@@ -27,6 +29,7 @@ test:
       done
 
     # Build base images, using the GitLab registry as a cache
+    - date
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
     - |
       # Pull the base image so we don't have to build from scratch
@@ -40,6 +43,7 @@ test:
       # Push the updated image to the registry (might be no-op)
       docker tag datamart_base $CI_REGISTRY_IMAGE/base
       docker push $CI_REGISTRY_IMAGE/base
+    - date
     - |
       # Pull the base npm environment
       docker pull $CI_REGISTRY_IMAGE/npm || true
@@ -53,6 +57,7 @@ test:
       # Push the updated image to the registry (might be no-op)
       docker tag datamart_npm $CI_REGISTRY_IMAGE/npm
       docker push $CI_REGISTRY_IMAGE/npm
+    - date
 
     # Set up environment for testing
     - cp tests/ci.env .env
@@ -62,10 +67,13 @@ test:
     - "sed -i '/# NOTCI$/d' docker-compose.yml base.Dockerfile */Dockerfile"
 
     # Build images
+    - date
     - python3 scripts/docker-compose-cached-build.py
+    - date
     - docker-compose pull rabbitmq  # Don't build it
 
     # Bring services up
+    - date
     - |
       patch -p1 <<'END'
       --- a/docker-compose.yml
@@ -78,6 +86,7 @@ test:
            ulimits:
       END
     - scripts/setup.sh
+    - date
     - docker-compose up -d elasticsearch rabbitmq redis
     - |
       # Wait for Elasticsearch to come up
@@ -88,8 +97,10 @@ test:
         echo "Elasticsearch didn't come up after ${slept}s"
         exit 1
       fi
+    - date
     - docker-compose up -d coordinator lazo
     - sleep 10
+    - date
     - docker-compose up -d profiler apiserver apilb test_discoverer
     - |
       # Wait for profiling to end
@@ -105,19 +116,24 @@ test:
     - docker-compose logs profiler
 
     # Run the tests
+    - date
     - |
       # Run tests
       if ! python -Wd -m coverage run --branch tests/__main__.py; then docker-compose logs apiserver; docker-compose logs lazo; exit 1; fi
+    - date
     - docker-compose logs apiserver
     - docker-compose logs lazo
 
     # Run the frontend tests
+    - date
     - docker run --rm datamart_npm sh -c "CI=true npm run test"
+    - date
 
     # Generate coverage report
     - docker-compose down -t 30
     - coverage combine -a cov/
     - coverage html
+    - date
   artifacts:
     paths:
       - htmlcov
