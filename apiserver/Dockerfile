@@ -12,7 +12,7 @@ RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poet
 RUN pip --disable-pip-version-check install toml
 COPY docker/install_deps.py poetry.lock /usr/src/app/
 RUN python -c "import json, toml; json.dump(toml.load(open('poetry.lock')), open('poetry.lock.json', 'w'))"
-RUN python3 install_deps.py poetry.lock.json
+RUN python install_deps.py poetry.lock.json
 # CI: RUN pip --disable-pip-version-check install coverage==5.1
 # CI: COPY .coveragerc /usr/src/app/
 
