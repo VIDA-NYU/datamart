@@ -19,6 +19,7 @@ test:
     # Docker containers can't reach the local runner!
   script:
     - diff -u lib_core/datamart_core/types.py lib_profiler/datamart_profiler/types.py && diff -u lib_core/datamart_core/types.py lib_materialize/datamart_materialize/types.py
+    - echo $?
     - /root/.poetry/bin/poetry install
     - |
       # Check READMEs
