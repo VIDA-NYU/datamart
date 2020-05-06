@@ -1,28 +1,20 @@
 image: python:3.7
 
-variables:
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_DRIVER: overlay2
-
-test:
-  stage: test
-  services:
-    - docker:19.03.5-dind
-  before_script:
-    - curl -Lo /tmp/docker.tgz https://download.docker.com/linux/static/stable/x86_64/docker-19.03.5.tgz && tar -xf /tmp/docker.tgz -C /usr/local && rm /tmp/docker.tgz && export PATH=/usr/local/docker:$PATH && export DOCKER_HOST=tcp://docker:2375
-    - docker info
-    - curl -Lo /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)"
-    - chmod +x /usr/local/bin/docker-compose
-    - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && /root/.poetry/bin/poetry config virtualenvs.create false
-    # Important note about this: the Docker server is on a separate host,
-    # so exposed ports are at 'docker' not 'localhost', and
-    # Docker containers can't reach the local runner!
+test_actual:
   script:
     - diff -u lib_core/datamart_core/types.py lib_profiler/datamart_profiler/types.py && diff -u lib_core/datamart_core/types.py lib_materialize/datamart_materialize/types.py
     - echo $?
+
+test_diff:
+  script:
     - diff -u lib_core/datamart_core/types.py lib_profiler/datamart_profiler/types.py
     - echo $?
+
+test_conds_1:
+  script:
     - false && true
     - echo $?
+test_conds_2:
+  script:
     - true && false
     - echo $?
