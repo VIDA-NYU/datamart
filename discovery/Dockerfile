@@ -11,8 +11,8 @@ WORKDIR /usr/src/app
 RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && $HOME/.poetry/bin/poetry config virtualenvs.create false
 RUN pip --disable-pip-version-check install toml
 COPY docker/install_deps.py poetry.lock /usr/src/app/
-RUN python -c "import json, toml; json.dump(toml.load(open('poetry.lock')), open('poetry.lock.json', 'w'))"
-RUN python install_deps.py poetry.lock.json
+RUN pypy3 -c "import json, toml; json.dump(toml.load(open('poetry.lock')), open('poetry.lock.json', 'w'))"
+RUN pypy3 install_deps.py poetry.lock.json
 # CI: RUN pip --disable-pip-version-check install coverage==5.1
 # CI: COPY .coveragerc /usr/src/app/
 
@@ -24,5 +24,5 @@ ARG version
 ENV DATAMART_VERSION ${version}
 RUN test -n "${DATAMART_VERSION}"
 USER 998
-ENTRYPOINT ["/tini", "--", "/bin/bash", "-c", "set -m; if [ \"$1\" = example ]; then exec python discovery/example_discovery.py; elif [ \"$1\" = testsuite ]; then exec python discovery/test_discovery.py; else exec \"$@\"; fi", "--"]
+ENTRYPOINT ["/tini", "--", "/bin/bash", "-c", "set -m; if [ \"$1\" = example ]; then exec pypy3 discovery/example_discovery.py; elif [ \"$1\" = testsuite ]; then exec pypy3 discovery/test_discovery.py; else exec \"$@\"; fi", "--"]
 CMD ["example"]
