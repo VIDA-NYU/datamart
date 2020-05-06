@@ -1,4 +1,4 @@
-image: python:3.7
+image: pypy:3.6
 
 variables:
   DOCKER_HOST: tcp://docker:2375
@@ -15,6 +15,7 @@ test:
     - curl -Lo /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)"
     - chmod +x /usr/local/bin/docker-compose
     - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && /root/.poetry/bin/poetry config virtualenvs.create false
+    - pypy3 -m venv /tmp/venv && . /tmp/venv/bin/activate
     # Important note about this: the Docker server is on a separate host,
     # so exposed ports are at 'docker' not 'localhost', and
     # Docker containers can't reach the local runner!
