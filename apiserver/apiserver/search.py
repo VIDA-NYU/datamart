@@ -217,11 +217,11 @@ def get_numerical_join_search_results(
                                 'source': textwrap.dedent('''\
                                     double start = Math.max(
                                         params.gte,
-                                        doc['coverage.gte'].value,
+                                        doc['coverage.gte'].value
                                     );
                                     double end = Math.min(
                                         params.lte,
-                                        doc['coverage.lte'].value,
+                                        doc['coverage.lte'].value
                                     );
                                     return (end - start + 1) / params.coverage;
                                 ''')
