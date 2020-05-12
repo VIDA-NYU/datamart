@@ -124,6 +124,13 @@ test:
       - htmlcov
     expire_in: 1 week
 
+style:
+  stage: test
+  before_script:
+    - pip --disable-pip-version-check install flake8
+  script:
+    - flake8 --ignore=E731,W504,W503,E501
+
 pages:
   stage: deploy
   before_script:
