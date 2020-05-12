@@ -1,5 +1,4 @@
 import contextlib
-import itertools
 from datetime import datetime
 import logging
 import numpy
@@ -329,8 +328,10 @@ def process_dataset(data, dataset_id=None, metadata=None,
                     ]
                 }
 
-            if structural_type == types.TEXT and \
-                    types.DATE_TIME not in semantic_types_dict:
+            if (
+                structural_type == types.TEXT and
+                types.DATE_TIME not in semantic_types_dict
+            ):
                 column_textual.append(column_meta['name'])
 
             # Resolve addresses into coordinates

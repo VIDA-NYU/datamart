@@ -99,7 +99,7 @@ def materialize_and_process_dataset(
         if len(columns) >= 3:
             non_matches = [
                 i for i, name in enumerate(columns)
-                if  parse_date(name) is None
+                if parse_date(name) is None
             ]
             if len(non_matches) <= max(2.0, 0.20 * len(columns)):
                 logger.info("Detected pivoted table")

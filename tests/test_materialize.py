@@ -93,16 +93,16 @@ basic_d3m_metadata = {
 
 basic_d3m_metadata_with_index = copy.deepcopy(basic_d3m_metadata)
 basic_d3m_metadata_with_index['dataResources'][0]['columns'] = (
-        [{
-            'colIndex': 0,
-            'colName': 'd3mIndex',
-            'colType': 'integer',
-            'role': ['index'],
-        }] +
-        [
-            dict(col, colIndex=col['colIndex'] + 1)
-            for col in basic_d3m_metadata['dataResources'][0]['columns']
-        ]
+    [{
+        'colIndex': 0,
+        'colName': 'd3mIndex',
+        'colType': 'integer',
+        'role': ['index'],
+    }] +
+    [
+        dict(col, colIndex=col['colIndex'] + 1)
+        for col in basic_d3m_metadata['dataResources'][0]['columns']
+    ]
 )
 
 

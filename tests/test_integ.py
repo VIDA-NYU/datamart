@@ -583,7 +583,7 @@ class TestDataSearch(DatamartTest):
                 {
                     'id': 'datamart.test.daily',
                     'metadata': daily_metadata,
-                    'd3m_dataset_description':  lambda d: isinstance(d, dict),
+                    'd3m_dataset_description': lambda d: isinstance(d, dict),
                     'score': lambda n: isinstance(n, float) and n > 0.0,
                     'augmentation': {
                         'left_columns': [[0]],
@@ -614,7 +614,7 @@ class TestDataSearch(DatamartTest):
                 {
                     'id': 'datamart.test.hourly',
                     'metadata': hourly_metadata,
-                    'd3m_dataset_description':  lambda d: isinstance(d, dict),
+                    'd3m_dataset_description': lambda d: isinstance(d, dict),
                     'score': lambda n: isinstance(n, float) and n > 0.0,
                     'augmentation': {
                         'left_columns': [[0]],
@@ -885,7 +885,7 @@ class TestDownload(DatamartTest):
         """Test adding d3mIndex automatically."""
         response = self.datamart_get(
             '/download/' + 'datamart.test.basic',
-            params={'format': 'd3m',  'format_need_d3mindex': '1'},
+            params={'format': 'd3m', 'format_need_d3mindex': '1'},
             allow_redirects=False,
         )
         self.assertEqual(response.status_code, 200)
@@ -1617,8 +1617,8 @@ class TestAugment(DatamartTest):
             # Truncate fields to work around rounding errors
             # FIXME: Deal with rounding errors
             table_lines = [
-                ','.join(e[:8] for e in l.split(','))
-                for l in table_lines
+                ','.join(e[:8] for e in line.split(','))
+                for line in table_lines
             ]
             self.assertCsvEqualNoOrder(
                 '\n'.join(table_lines[0:6]),

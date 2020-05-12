@@ -262,7 +262,7 @@ def cache_get_or_set(cache_dir, key, create_function, cache_invalid=False):
                         PROM_CACHE_MISSES.labels(cache_dir).inc(1)
                     # Cache doesn't exist and we have it locked -- create
                     create_function(temp_path)
-                except:
+                except BaseException:
                     # Creation failed, clean up before unlocking!
                     if os.path.isdir(temp_path):
                         shutil.rmtree(temp_path)

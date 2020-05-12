@@ -268,8 +268,11 @@ class Search(BaseHandler, GracefulHandler, ProfilePostedData):
         tabular_variables = list()
         if query:
             try:
-                query_args_main, query_sup_functions, query_sup_filters, tabular_variables = \
-                    parse_query(query)
+                (
+                    query_args_main,
+                    query_sup_functions, query_sup_filters,
+                    tabular_variables,
+                ) = parse_query(query)
             except ClientError as e:
                 return self.send_error_json(400, str(e))
 
@@ -838,14 +841,13 @@ class Application(GracefulApplication):
                     'http://coordinator:8003/api/statistics',
                 )
                 statistics = json.loads(response.body.decode('utf-8'))
-            except Exception as e:
+            except Exception:
                 logger.exception("Can't get statistics from coordinator")
             else:
                 self.sources_counts = statistics['sources_counts']
                 self.recent_discoveries = statistics['recent_discoveries']
 
             await asyncio.sleep(60)
-
 
     def log_request(self, handler):
         if handler.request.path == '/health':

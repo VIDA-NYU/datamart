@@ -8,7 +8,6 @@ import os
 import subprocess
 
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'Datamart'

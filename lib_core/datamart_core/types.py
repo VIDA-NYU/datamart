@@ -1,5 +1,4 @@
-MISSING_DATA = 'https://metadata.datadrivendiscovery.org/types/' + \
-               'MissingData'
+MISSING_DATA = 'https://metadata.datadrivendiscovery.org/types/MissingData'
 INTEGER = 'http://schema.org/Integer'
 FLOAT = 'http://schema.org/Float'
 TEXT = 'http://schema.org/Text'

@@ -1,5 +1,4 @@
 import copy
-import io
 import itertools
 import json
 import logging
@@ -289,12 +288,13 @@ def perform_aggregations(
 CHUNK_SIZE_ROWS = 10000
 
 
-def join(original_data, augment_data_path, original_metadata, augment_metadata,
-         destination_csv,
-         left_columns, right_columns,
-         how='left', columns=None,
-         agg_functions=None, temporal_resolution=None,
-         return_only_datamart_data=False,
+def join(
+    original_data, augment_data_path, original_metadata, augment_metadata,
+    destination_csv,
+    left_columns, right_columns,
+    how='left', columns=None,
+    agg_functions=None, temporal_resolution=None,
+    return_only_datamart_data=False,
 ):
     """
     Performs a join between original_data (pandas.DataFrame)

@@ -156,7 +156,7 @@ _nominatim_session = requests.Session()
 
 def nominatim_query(url, *, q):
     if url[-1] == '/':
-        url = url [:-1]
+        url = url[:-1]
     res = start = end = None  # Avoids warnings
     for i in range(5):
         if i > 0:
