@@ -14,6 +14,7 @@ req = [
     'python-dateutil',
     'scikit-learn',
     'regex',
+    'datamart-geo==0.1',
 ]
 with io.open('README.rst', encoding='utf-8') as fp:
     description = fp.read()

@@ -29,10 +29,11 @@ include = []
 
 [tool.poetry.dependencies]
 python = "^3.7"
-datamart_profiler = {path = "./lib_profiler"}
-datamart_materialize = {path = "./lib_materialize"}
-datamart_augmentation = {path = "./lib_augmentation"}
-datamart_core = {path = "./lib_core"}
+datamart-profiler = {path = "./lib_profiler"}
+datamart-materialize = {path = "./lib_materialize"}
+datamart-augmentation = {path = "./lib_augmentation"}
+datamart-geo = {path = "lib_geo"}
+datamart-core = {path = "./lib_core"}
 datamart-coordinator-service = {path = "./coordinator"}
 datamart-profiler-service = {path = "./profiler"}
 datamart-api-service = {path = "./apiserver"}

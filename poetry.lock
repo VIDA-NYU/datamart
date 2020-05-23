@@ -203,6 +203,20 @@ url = "lib_core"
 
 [[package]]
 category = "main"
+description = "Datamart geographical data"
+develop = true
+name = "datamart-geo"
+optional = false
+python-versions = "*"
+version = "0.1"
+
+[package.source]
+reference = ""
+type = "directory"
+url = "lib_geo"
+
+[[package]]
+category = "main"
 description = "Materialization library for Datamart"
 develop = true
 name = "datamart-materialize"
@@ -942,7 +956,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "b6a65f3a9404c496ab4f8c47d64820871712778f91ef42cb91dc2068a185d2f8"
+content-hash = "12b78a6c1e037ce50139bca0d5aa88a5521e1f2dabe6f4bb6532880ac91866f7"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1019,6 +1033,7 @@ datamart-api-service = []
 datamart-augmentation = []
 datamart-coordinator-service = []
 datamart-core = []
+datamart-geo = []
 datamart-materialize = []
 datamart-noaa-discovery-service = []
 datamart-profiler = []
