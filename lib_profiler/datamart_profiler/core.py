@@ -65,7 +65,7 @@ def truncate_string(s, limit=140):
 
 @PROM_PROFILE.time()
 def process_dataset(data, dataset_id=None, metadata=None,
-                    lazo_client=None, nominatim=None,
+                    lazo_client=None, nominatim=None, geo_data=None,
                     search=False, include_sample=False,
                     coverage=True, plots=False, load_max_size=None, **kwargs):
     """Compute all metafeatures from a dataset.
@@ -76,6 +76,8 @@ def process_dataset(data, dataset_id=None, metadata=None,
         very limited).
     :param lazo_client: client for the Lazo Index Server
     :param nominatim: URL of the Nominatim server
+    :param geo_data: a datamart_geo.GeoData instance to use to resolve named
+        administrative territorial entities
     :param search: True if this method is being called during the search
         operation (and not for indexing).
     :param include_sample: Set to True to include a few random rows to the
@@ -202,7 +204,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
             array = data.iloc[:, i]
             # Identify types
             structural_type, semantic_types_dict, additional_meta = \
-                identify_types(array, column_meta['name'])
+                identify_types(array, column_meta['name'], geo_data)
             # Set structural type
             column_meta['structural_type'] = structural_type
             # Add semantic types to the ones already present

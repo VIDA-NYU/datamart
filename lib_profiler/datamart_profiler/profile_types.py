@@ -53,7 +53,7 @@ MAX_UNCLEAN = 0.02  # 2%
 MAX_CATEGORICAL_RATIO = 0.10  # 10%
 
 
-def identify_types(array, name):
+def identify_types(array, name, geo_data):
     num_total = len(array)
 
     column_meta = {}
@@ -116,7 +116,15 @@ def identify_types(array, name):
             (num_total - num_empty - num_bool) / num_total
 
     if structural_type == types.TEXT:
-        if num_text >= threshold:
+        categorical = False
+
+        if geo_data is not None:
+            resolved = geo_data.resolve_names(array)
+            if sum(1 for r in resolved if r is not None) > 0.7 * len(array):
+                semantic_types_dict[types.ADMIN] = resolved
+                categorical = True
+
+        if not categorical and num_text >= threshold:
             # Free text
             semantic_types_dict[types.TEXT] = None
         else:
@@ -125,6 +133,7 @@ def identify_types(array, name):
             column_meta['num_distinct_values'] = len(values)
             max_categorical = MAX_CATEGORICAL_RATIO * (len(array) - num_empty)
             if (
+                categorical or
                 len(values) <= max_categorical or
                 types.BOOLEAN in semantic_types_dict
             ):

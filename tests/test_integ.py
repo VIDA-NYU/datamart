@@ -1283,7 +1283,7 @@ class TestAugment(DatamartTest):
                                 {
                                     'colIndex': 1,
                                     'colName': 'location',
-                                    'colType': 'string',
+                                    'colType': 'categorical',
                                     'role': ['attribute'],
                                 },
                                 {
@@ -1424,7 +1424,7 @@ class TestAugment(DatamartTest):
                                 {
                                     'colIndex': 1,
                                     'colName': 'location',
-                                    'colType': 'string',
+                                    'colType': 'categorical',
                                     'role': ['attribute'],
                                 },
                                 {
