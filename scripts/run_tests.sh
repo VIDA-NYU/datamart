@@ -41,5 +41,9 @@ set +x
 cat .env | while read l; do [ -z "$l" ] || [ "${l:0:1}" = \# ] || echo "export $l"; done >.env.sh && . .env.sh && rm .env.sh
 set -x
 
+# Set other variables
+export DATAMART_VERSION=v0.0
+export DATAMART_GEO_DATA=$(pwd)/lib_geo/data
+
 # Run tests
-DATAMART_VERSION=v0.0 poetry run python tests
+poetry run python tests
