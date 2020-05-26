@@ -29,6 +29,8 @@ SAMPLE_ROWS = 20
 
 MAX_UNCLEAN_ADDRESSES = 0.20  # 20%
 
+MAX_WRONG_LEVEL_ADMIN = 0.10  # 10%
+
 
 BUCKETS = [0.5, 1.0, 5.0, 10.0, 20.0, 30.0, 60.0, 120.0, 300.0, 600.0]
 
@@ -377,6 +379,20 @@ def process_dataset(data, dataset_id=None, metadata=None,
                         resolved_addresses[column_meta['name']] = locations
                         if types.ADDRESS not in column_meta['semantic_types']:
                             column_meta['semantic_types'].append(types.ADDRESS)
+
+            # Guess level of administrative areas
+            if types.ADMIN in semantic_types_dict:
+                areas = semantic_types_dict[types.ADMIN]
+                level_counter = collections.Counter()
+                for area in areas:
+                    if area is not None:
+                        level_counter[area.level] += 1
+                threshold = (1.0 - MAX_WRONG_LEVEL_ADMIN) * len(areas)
+                threshold = max(3, threshold)
+                for level, count in level_counter.items():
+                    if count >= threshold:
+                        column_meta['admin_area_level'] = level
+                        break
 
     # Textual columns
     if lazo_client and column_textual:
