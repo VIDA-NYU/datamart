@@ -16,6 +16,9 @@ RUN python3 install_deps.py poetry.lock.json
 
 COPY lib_core lib_core
 RUN pip --disable-pip-version-check install --no-deps -e /usr/src/app/lib_core
+COPY lib_geo lib_geo
+RUN pip --disable-pip-version-check install --no-deps -e /usr/src/app/lib_geo
+ENV DATAMART_GEO_DATA /usr/src/app/lib_geo/data
 COPY lib_materialize lib_materialize
 RUN pip --disable-pip-version-check install --no-deps -e /usr/src/app/lib_materialize
 COPY lib_augmentation lib_augmentation

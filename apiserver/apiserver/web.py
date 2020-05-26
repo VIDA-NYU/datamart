@@ -26,6 +26,7 @@ from datamart_augmentation.augmentation import AugmentationError, augment
 from datamart_core.common import setup_logging, hash_json, log_future, json2msg
 from datamart_core.fscache import cache_get_or_set
 from datamart_core.materialize import get_dataset
+from datamart_geo import GeoData
 import datamart_profiler
 
 from .enhance_metadata import enhance_metadata
@@ -832,7 +833,12 @@ class Application(GracefulApplication):
         self.redis = redis_client
         self.lazo_client = lazo
         self.nominatim = os.environ['NOMINATIM_URL']
+        self.geo_data = GeoData.from_local_cache()
         self.channel = None
+
+        self.geo_data.load_area(0)
+        self.geo_data.load_area(1)
+        self.geo_data.load_area(2)
 
         log_future(asyncio.get_event_loop().create_task(self._amqp()), logger)
 

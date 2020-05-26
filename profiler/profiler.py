@@ -16,6 +16,7 @@ import xlrd
 from datamart_core.common import setup_logging, add_dataset_to_index, \
     delete_dataset_from_index, log_future, json2msg, msg2json
 from datamart_core.materialize import get_dataset
+from datamart_geo import GeoData
 from datamart_materialize import DatasetTooBig
 from datamart_materialize.excel import xls_to_csv
 from datamart_materialize.pivot import pivot_table
@@ -51,7 +52,7 @@ def prom_incremented(metric, amount=1):
 
 def materialize_and_process_dataset(
     dataset_id, metadata,
-    lazo_client, nominatim,
+    lazo_client, nominatim, geo_data,
     profile_semaphore,
     cache_invalid=False,
 ):
@@ -130,6 +131,7 @@ def materialize_and_process_dataset(
                     metadata=metadata,
                     lazo_client=lazo_client,
                     nominatim=nominatim,
+                    geo_data=geo_data,
                     include_sample=True,
                     coverage=True,
                     plots=True,
@@ -155,7 +157,12 @@ class Profiler(object):
             port=int(os.environ['LAZO_SERVER_PORT'])
         )
         self.nominatim = os.environ['NOMINATIM_URL']
+        self.geo_data = GeoData.from_local_cache()
         self.channel = None
+
+        self.geo_data.load_area(0)
+        self.geo_data.load_area(1)
+        self.geo_data.load_area(2)
 
         self.loop = asyncio.get_event_loop()
         log_future(self.loop.create_task(self._run()), logger,
@@ -235,6 +242,7 @@ class Profiler(object):
                 metadata,
                 self.lazo_client,
                 self.nominatim,
+                self.geo_data,
                 self.profile_semaphore,
                 cache_invalid,
             )

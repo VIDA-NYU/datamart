@@ -1230,6 +1230,7 @@ class ProfilePostedData(tornado.web.RequestHandler):
                 data=io.BytesIO(data),
                 lazo_client=self.application.lazo_client,
                 nominatim=self.application.nominatim,
+                geo_data=self.application.geo_data,
                 search=True,
                 include_sample=False,
                 coverage=True,
