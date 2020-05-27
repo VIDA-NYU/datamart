@@ -607,5 +607,35 @@ class TestGeo(DataTestCase):
                         'admin_area_level': 1,
                     },
                 ],
+                'spatial_coverage': [
+                    {
+                        'admin': 'zero',
+                        'ranges': [
+                            {
+                                'range': {
+                                    'type': 'envelope',
+                                    'coordinates': [
+                                        [-61.79784095, 55.065334377],
+                                        [55.8545028, -21.370782159],
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        'admin': 'one',
+                        'ranges': [
+                            {
+                                'range': {
+                                    'type': 'envelope',
+                                    'coordinates': [
+                                        [-61.79784, 53.72778],
+                                        [13.81686, 14.40811],
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                ],
             },
         )

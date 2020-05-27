@@ -212,7 +212,7 @@ class GeoSpatialCoverageMap extends PersistentComponent<
   }
 
   renderCoverageColumns(coverage: SpatialCoverage) {
-    const { lat, lon, address, point } = coverage;
+    const { lat, lon, address, point, admin } = coverage;
     if (lat && lon) {
       return (
         <>
@@ -239,6 +239,14 @@ class GeoSpatialCoverageMap extends PersistentComponent<
         <>
           <b>Point Column: </b>
           <span className="badge badge-pill badge-secondary mr-1">{point}</span>
+        </>
+      );
+    }
+    if (admin) {
+      return (
+        <>
+          <b>Administrative Area Column: </b>
+          <span className="badge badge-pill badge-secondary mr-1">{admin}</span>
         </>
       );
     }

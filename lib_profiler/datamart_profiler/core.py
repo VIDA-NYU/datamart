@@ -198,6 +198,9 @@ def process_dataset(data, dataset_id=None, metadata=None,
     # Addresses
     resolved_addresses = {}
 
+    # Administrative areas
+    resolved_admin_areas = {}
+
     # Identify types
     logger.info("Identifying types, %d columns...", len(columns))
     with PROM_TYPES.time():
@@ -393,6 +396,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
                     if count >= threshold:
                         column_meta['admin_area_level'] = level
                         break
+                resolved_admin_areas[column_meta['name']] = areas
 
     # Textual columns
     if lazo_client and column_textual:
@@ -520,6 +524,43 @@ def process_dataset(data, dataset_id=None, metadata=None,
                 if spatial_ranges:
                     spatial_coverage.append({"address": name,
                                              "ranges": spatial_ranges})
+
+            # Compute ranges from administrative areas
+            for name, areas in resolved_admin_areas.items():
+                merged = None
+                for area in areas:
+                    if area is None:
+                        continue
+                    new = geo_data.get_bounds(area.area)
+                    if new:
+                        if merged is None:
+                            merged = new
+                        else:
+                            merged = (
+                                min(merged[0], new[0]),
+                                max(merged[1], new[1]),
+                                min(merged[2], new[2]),
+                                max(merged[3], new[3]),
+                            )
+                if (
+                    merged is not None
+                    and merged[1] - merged[0] > 0.01
+                    and merged[3] - merged[2] > 0.01
+                ):
+                    spatial_coverage.append({
+                        "admin": name,
+                        "ranges": [
+                            {
+                                'range': {
+                                    'type': 'envelope',
+                                    'coordinates': [
+                                        [merged[0], merged[3]],
+                                        [merged[1], merged[2]],
+                                    ],
+                                },
+                            },
+                        ],
+                    })
 
         if spatial_coverage:
             metadata['spatial_coverage'] = spatial_coverage

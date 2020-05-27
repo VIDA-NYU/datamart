@@ -189,6 +189,11 @@ def add_dataset_to_sup_index(es, dataset_id, metadata):
                     spatial_coverage_metadata['point']
                 spatial_coverage_metadata['point_index'] = \
                     column_name_to_index[spatial_coverage_metadata['point']]
+            elif 'admin' in spatial_coverage_metadata:
+                spatial_coverage_metadata['name'] = \
+                    spatial_coverage_metadata['admin']
+                spatial_coverage_metadata['admin_index'] = \
+                    column_name_to_index[spatial_coverage_metadata['admin']]
             else:
                 raise ValueError("Invalid spatial_coverage")
             for spatial_range in spatial_coverage_metadata['ranges']:
