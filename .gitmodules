@@ -1,0 +1,3 @@
+[submodule "lib_geo"]
+	path = lib_geo
+	url = https://gitlab.com/ViDA-NYU/datamart/datamart-geo.git

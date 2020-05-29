@@ -3,6 +3,7 @@ image: python:3.7
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_DRIVER: overlay2
+  GIT_SUBMODULE_STRATEGY: recursive
 
 test:
   stage: test
