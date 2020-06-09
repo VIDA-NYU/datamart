@@ -26,6 +26,7 @@ from datamart_augmentation.augmentation import AugmentationError, augment
 from datamart_core.common import setup_logging, hash_json, log_future, json2msg
 from datamart_core.fscache import cache_get_or_set
 from datamart_core.materialize import get_dataset
+from datamart_core.prom import PromMeasureRequest
 from datamart_geo import GeoData
 import datamart_profiler
 
@@ -40,33 +41,72 @@ logger = logging.getLogger(__name__)
 
 BUCKETS = [0.5, 1.0, 5.0, 10.0, 20.0, 30.0, 60.0, 120.0, 300.0, 600.0]
 
-PROM_PROFILE_TIME = prometheus_client.Histogram('req_profile_seconds',
-                                                "Profile request time",
-                                                buckets=BUCKETS)
-PROM_PROFILE = prometheus_client.Counter('req_profile_count',
-                                         "Profile requests")
-PROM_SEARCH_TIME = prometheus_client.Histogram('req_search_seconds',
-                                               "Search request time",
-                                               buckets=BUCKETS)
-PROM_SEARCH = prometheus_client.Counter('req_search_count',
-                                        "Search requests")
-PROM_DOWNLOAD_TIME = prometheus_client.Histogram('req_download_seconds',
-                                                 "Download request time",
-                                                 buckets=BUCKETS)
-PROM_DOWNLOAD = prometheus_client.Counter('req_download_count',
-                                          "Download requests")
-PROM_DOWNLOAD_ID = prometheus_client.Counter('req_download_id_count',
-                                             "Download by ID requests")
-PROM_METADATA_TIME = prometheus_client.Histogram('req_metadata_seconds',
-                                                 "Metadata request time",
-                                                 buckets=BUCKETS)
-PROM_METADATA = prometheus_client.Counter('req_metadata_count',
-                                          "Metadata requests")
-PROM_AUGMENT_TIME = prometheus_client.Histogram('req_augment_seconds',
-                                                "Augment request time",
-                                                buckets=BUCKETS)
-PROM_AUGMENT = prometheus_client.Counter('req_augment_count',
-                                         "Augment requests")
+PROM_PROFILE = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_profile_count',
+        "Profile requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_profile_seconds',
+        "Profile request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_SEARCH = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_search_count',
+        "Search requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_search_seconds',
+        "Search request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_DOWNLOAD = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_download_count',
+        "Download requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_download_seconds',
+        "Download request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_METADATA = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_metadata_count',
+        "Metadata requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_metadata_seconds',
+        "Metadata request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_AUGMENT = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_augment_count',
+        "Augment requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_augment_seconds',
+        "Augment request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_UPLOAD = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_upload_count',
+        "Upload requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_upload_seconds',
+        "Upload request time",
+        buckets=BUCKETS,
+    ),
+)
 
 
 class BaseHandler(RequestHandler):
@@ -137,10 +177,8 @@ def get_data_profile_from_es(es, dataset_id):
 
 
 class Profile(BaseHandler, GracefulHandler, ProfilePostedData):
-    @PROM_PROFILE_TIME.time()
+    @PROM_PROFILE.sync()
     def post(self):
-        PROM_PROFILE.inc()
-
         data = self.get_body_argument('data', None)
         if 'data' in self.request.files:
             data = self.request.files['data'][0].body
@@ -168,10 +206,8 @@ class Profile(BaseHandler, GracefulHandler, ProfilePostedData):
 
 
 class Search(BaseHandler, GracefulHandler, ProfilePostedData):
-    @PROM_SEARCH_TIME.time()
+    @PROM_SEARCH.sync()
     def post(self):
-        PROM_SEARCH.inc()
-
         type_ = self.request.headers.get('Content-type', '')
         data = None
         data_id = None
@@ -430,10 +466,8 @@ class BaseDownload(BaseHandler):
 
 
 class DownloadId(BaseDownload, GracefulHandler):
-    @PROM_DOWNLOAD_TIME.time()
+    @PROM_DOWNLOAD.sync()
     def get(self, dataset_id):
-        PROM_DOWNLOAD_ID.inc()
-
         format, format_options = self.read_format()
 
         # Get materialization data from Elasticsearch
@@ -448,10 +482,8 @@ class DownloadId(BaseDownload, GracefulHandler):
 
 
 class Download(BaseDownload, GracefulHandler, ProfilePostedData):
-    @PROM_DOWNLOAD_TIME.time()
+    @PROM_DOWNLOAD.sync()
     def post(self):
-        PROM_DOWNLOAD.inc()
-
         type_ = self.request.headers.get('Content-type', '')
 
         task = None
@@ -548,10 +580,8 @@ class Download(BaseDownload, GracefulHandler, ProfilePostedData):
 
 
 class Metadata(BaseHandler, GracefulHandler):
-    @PROM_METADATA_TIME.time()
+    @PROM_METADATA.sync()
     def get(self, dataset_id):
-        PROM_METADATA.inc()
-
         es = self.application.elasticsearch
         try:
             metadata = es.get('datamart', dataset_id)['_source']
@@ -583,10 +613,8 @@ class Metadata(BaseHandler, GracefulHandler):
 
 
 class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
-    @PROM_AUGMENT_TIME.time()
+    @PROM_AUGMENT.sync()
     def post(self):
-        PROM_AUGMENT.inc()
-
         type_ = self.request.headers.get('Content-type', '')
         if not type_.startswith('multipart/form-data'):
             return self.send_error_json(400, "Use multipart/form-data to send "
@@ -719,6 +747,7 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
 
 
 class Upload(BaseHandler):
+    @PROM_UPLOAD.async_()
     async def post(self):
         if 'file' in self.request.files:
             file = self.request.files['file'][0]
