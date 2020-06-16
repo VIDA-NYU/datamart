@@ -127,6 +127,8 @@ class TestProfiler(DataTestCase):
                 'datamart.test.daily': daily_metadata,
                 'datamart.test.hourly': hourly_metadata,
                 'datamart.test.dates_pivoted': dates_pivoted_metadata,
+                'datamart.test.excel': other_formats_metadata,
+                'datamart.test.spss': other_formats_metadata,
             },
         )
 
@@ -2676,6 +2678,66 @@ dates_pivoted_metadata = {
               "usa,2012-05-01,no\nusa,2012-06-01,no\nusa,2012-07-01,no\nusa," +
               "2012-09-01,no\nusa,2012-10-01,yes\nusa,2012-11-01,yes\nusa,20" +
               "12-12-01,no\n",
+    'date': lambda d: isinstance(d, str),
+    'version': version
+}
+
+
+other_formats_metadata = lambda fmt: {
+    'id': lambda v: isinstance(v, str),
+    'name': lambda v: isinstance(v, str),
+    'description': 'Excel format test',
+    'source': 'remi',
+    'size': 53,
+    'nb_rows': 4,
+    'nb_profiled_rows': 4,
+    'columns': [
+        {
+            'name': 'name',
+            'structural_type': 'http://schema.org/Text',
+            'semantic_types': [],
+            'num_distinct_values': 4,
+        },
+        {
+            'name': 'age',
+            'structural_type': 'http://schema.org/Integer',
+            'semantic_types': [],
+            'unclean_values_ratio': 0.0,
+            'num_distinct_values': 4,
+            'mean': lambda n: round(n, 2) == 26.0,
+            'stddev': lambda n: round(n, 2) == 10.61,
+            'coverage': (
+                lambda l: sorted(l, key=lambda e: e['range']['gte']) == [
+                    {
+                        'range': {
+                            'gte': 9.0,
+                            'lte': 9.0,
+                        },
+                    },
+                    {
+                        'range': {
+                            'gte': 27.0,
+                            'lte': 30.0,
+                        },
+                    },
+                    {
+                        'range': {
+                            'gte': 38.0,
+                            'lte': 38.0,
+                        },
+                    },
+                ]
+            ),
+            'plot': check_plot('histogram_numerical'),
+        },
+    ],
+    'materialize': {
+        'direct_url': lambda v: isinstance(v, str),
+        'identifier': 'datamart.test',
+        'date': lambda d: isinstance(d, str),
+        'convert': [{'identifier': fmt}],
+    },
+    'sample': 'name,age\nC++,38.0\nPython,30.0\nRust,9.0\nLua,27.0\n',
     'date': lambda d: isinstance(d, str),
     'version': version
 }

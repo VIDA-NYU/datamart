@@ -112,6 +112,28 @@ class TestDiscoverer(Discoverer):
             dataset_id='dates_pivoted',
         )
 
+        # Use URL for this one
+        self.record_dataset(
+            dict(direct_url='http://test-discoverer:7000/spss.sav'),
+            {
+                # Omit name, should be set to 'spss' automatically
+                'description': "SPSS format test",
+                'source': 'remi',
+            },
+            dataset_id='spss',
+        )
+
+        # Use URL for this one
+        self.record_dataset(
+            dict(direct_url='http://test-discoverer:7000/excel.xlsx'),
+            {
+                # Omit name, should be set to 'excel' automatically
+                'description': "Excel format test",
+                'source': 'remi',
+            },
+            dataset_id='excel',
+        )
+
         # Needs to be last, CI waits for it to test
 
         # Use URL for this one
