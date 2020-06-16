@@ -16,11 +16,94 @@
       "type": "object",
       "description": "The metadata associated with the dataset. Metadata from different DataMart systems can have different schemas.",
       "properties": {
-        "name": {
-          "type": "string"
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "source": {"type": "string"},
+        "date": {"type": "string"},
+        "license": {"type": "string"},
+        "sample": {
+          "type": "string",
+          "description": "A random sample in CSV format"
         },
-        "description": {
-          "type": "string"
+        "size": {
+          "type": "integer",
+          "description": "Size of the file in bytes"
+        },
+        "nb_rows": {
+          "type": "integer",
+          "description": "Total number of rows in the file"
+        },
+        "nb_profiled_rows": {
+          "type": "integer",
+          "description": "Number of rows in the sample that was profiled. If the dataset is too big, this will be less than 'nb_rows'"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version number of the Datamart profiler which generate this record"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "structural_type": {"type": "string"},
+              "semantic_types": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "missing_values_ratio": {"type": "number"},
+              "unclean_values_ratio": {"type": "number"},
+              "num_distinct_values": {"type": "integer"},
+              "temporal_resolution": {
+                "$ref": "#/definitions/temporal_resolution"
+              },
+              "mean": {"type": "number"},
+              "stddev": {"type": "number"},
+              "coverage": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "range": {
+                      "type": "object",
+                      "properties": {
+                        "gte": {"type": "number"},
+                        "lte": {"type": "number"}
+                      },
+                      "required": ["gte", "lte"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["range"],
+                  "additionalProperties": false
+                }
+              },
+              "plot": {
+                "$ref": "#/definitions/plot"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "spatial_coverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "Keep in sync, search code for 279a32",
+            "properties": {
+              "lat": {"type": "string"},
+              "lon": {"type": "string"},
+              "point": {"type": "string"},
+              "address": {"type": "string"},
+              "admin": {"type": "string"},
+              "ranges": {
+                "$ref": "#/definitions/spatial_ranges"
+              }
+            },
+            "required": ["ranges"],
+            "additionalProperties": false
+          }
         }
       },
       "required": ["name"]
@@ -101,6 +184,7 @@
     }
   },
   "required": ["id", "score", "metadata"],
+  "additionalProperties": true,
   "definitions": {
     "augmentation_unit": {
       "type": "array",
@@ -119,6 +203,110 @@
         "hour",
         "minute",
         "second"
+      ]
+    },
+    "spatial_ranges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["envelope"]
+              },
+              "coordinates": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {"type": "number"}
+                }
+              }
+            },
+            "required": ["type", "coordinates"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["range"],
+        "additionalProperties": false
+      }
+    },
+    "plot": {
+      "description": "Plot data meant for display",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["histogram_numerical"]
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "count": {"type": "integer"},
+                  "bin_start": {"type": "number"},
+                  "bin_end": {"type": "number"}
+                },
+                "required": ["count", "bin_start", "bin_end"]
+              }
+            }
+          },
+          "required": ["type", "data"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["histogram_temporal"]
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "count": {"type": "integer"},
+                  "date_start": {"type": "string"},
+                  "date_end": {"type": "string"}
+                },
+                "required": ["count", "date_start", "date_end"]
+              }
+            }
+          },
+          "required": ["type", "data"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "histogram_categorical",
+                "histogram_text"
+              ]
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "count": {"type": "integer"},
+                  "bin": {"type": "string"}
+                },
+                "required": ["count", "bin"]
+              }
+            }
+          },
+          "required": ["type", "data"],
+          "additionalProperties": false
+        }
       ]
     }
   }
