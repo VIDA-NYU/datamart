@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, match } from 'react-router-dom';
+import { History } from 'history';
 import { generateRandomId } from '../../utils';
 import * as api from '../../api/rest';
 import { VerticalLogo, HorizontalLogo } from '../Logo/Logo';
@@ -42,7 +43,10 @@ interface SearchAppState {
   sources: string[];
 }
 
-interface SearchAppProps {}
+interface SearchAppProps {
+  history: History;
+  match: match;
+}
 
 class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
   constructor(props: SearchAppProps) {
