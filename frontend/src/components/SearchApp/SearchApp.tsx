@@ -159,6 +159,7 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
         sources: sources[0],
         relatedFile: relatedFiles[0],
       };
+      this.props.history.push(`${this.props.match.url}?q=${JSON.stringify(query)}`);
 
       this.setState({
         searchQuery: query,
