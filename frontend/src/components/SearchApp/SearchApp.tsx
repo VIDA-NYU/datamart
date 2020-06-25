@@ -70,7 +70,7 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
     const params = new URLSearchParams(location.search);
     const q = params.get('q');
     if (q) {
-      const query: api.SearchQuery = JSON.parse(q);
+      const query: api.SearchQuery = JSON.parse(decodeURIComponent(q));
       if (query) {
         this.fetchSearchResults(query);
       }
@@ -80,7 +80,6 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
   componentDidUpdate(prevProps: SearchAppProps) {
     const { location } = this.props;
     if (location !== prevProps.location) {
-      console.log(this.props.location);
       if (location.search === '') {
         this.resetQuery();
       } else {
@@ -186,9 +185,8 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
       };
 
       // pushes the query into the URL, which will trigger fetching the search results
-      this.props.history.push(
-        `${this.props.match.url}?q=${JSON.stringify(query)}`
-      );
+      const q = encodeURIComponent(JSON.stringify(query));
+      this.props.history.push(`${this.props.match.url}?q=${q}`);
     }
   }
 
