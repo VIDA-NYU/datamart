@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, match } from 'react-router-dom';
-import { History } from 'history';
+import { History, Location } from 'history';
 import { generateRandomId } from '../../utils';
 import * as api from '../../api/rest';
 import { VerticalLogo, HorizontalLogo } from '../Logo/Logo';
@@ -46,6 +46,7 @@ interface SearchAppState {
 interface SearchAppProps {
   history: History;
   match: match;
+  location: Location;
 }
 
 class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
@@ -65,8 +66,32 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
     };
   }
 
+  updateSearchStateFromUrlParams(location: Location) {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    if (q) {
+      const query: api.SearchQuery = JSON.parse(q);
+      if (query) {
+        this.fetchSearchResults(query);
+      }
+    }
+  }
+
+  componentDidUpdate(prevProps: SearchAppProps) {
+    const { location } = this.props;
+    if (location !== prevProps.location) {
+      console.log(this.props.location);
+      if (location.search === '') {
+        this.resetQuery();
+      } else {
+        this.updateSearchStateFromUrlParams(this.props.location);
+      }
+    }
+  }
+
   componentDidMount() {
     this.fetchSources();
+    this.updateSearchStateFromUrlParams(this.props.location);
   }
 
   async fetchSources() {
@@ -159,32 +184,38 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
         sources: sources[0],
         relatedFile: relatedFiles[0],
       };
-      this.props.history.push(`${this.props.match.url}?q=${JSON.stringify(query)}`);
 
-      this.setState({
-        searchQuery: query,
-        searchState: SearchState.SEARCH_REQUESTING,
-        filters: this.state.filters.map(f => ({ ...f, hidden: true })),
-      });
-
-      api
-        .search(query)
-        .then(response => {
-          if (response.status === api.RequestResult.SUCCESS && response.data) {
-            this.setState({
-              searchState: SearchState.SEARCH_SUCCESS,
-              searchResponse: {
-                results: aggregateResults(response.data.results),
-              },
-            });
-          } else {
-            this.setState({ searchState: SearchState.SEARCH_FAILED });
-          }
-        })
-        .catch(() => {
-          this.setState({ searchState: SearchState.SEARCH_FAILED });
-        });
+      // pushes the query into the URL, which will trigger fetching the search results
+      this.props.history.push(
+        `${this.props.match.url}?q=${JSON.stringify(query)}`
+      );
     }
+  }
+
+  fetchSearchResults(query: api.SearchQuery) {
+    this.setState({
+      searchQuery: query,
+      searchState: SearchState.SEARCH_REQUESTING,
+      filters: this.state.filters.map(f => ({ ...f, hidden: true })),
+    });
+
+    api
+      .search(query)
+      .then(response => {
+        if (response.status === api.RequestResult.SUCCESS && response.data) {
+          this.setState({
+            searchState: SearchState.SEARCH_SUCCESS,
+            searchResponse: {
+              results: aggregateResults(response.data.results),
+            },
+          });
+        } else {
+          this.setState({ searchState: SearchState.SEARCH_FAILED });
+        }
+      })
+      .catch(() => {
+        this.setState({ searchState: SearchState.SEARCH_FAILED });
+      });
   }
 
   toggleFilter(filterId: string) {
