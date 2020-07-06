@@ -193,6 +193,7 @@ apiVersion: v1
 metadata:
   name: prometheus
 spec:
+  storageClassName: "csi-cephfs-sc"
   accessModes:
   - ReadWriteOnce
   resources:
@@ -274,6 +275,7 @@ apiVersion: v1
 metadata:
   name: grafana
 spec:
+  storageClassName: "csi-cephfs-sc"
   accessModes:
   - ReadWriteOnce
   resources:
