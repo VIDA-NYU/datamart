@@ -49,12 +49,6 @@ spec:
         volumeMounts:
         - name: elasticsearch
           mountPath: /usr/share/elasticsearch/data
-      - name: increase-vm-max-map
-        image: busybox
-        command: ["sysctl", "-w", "vm.max_map_count=262144"]
-        securityContext:
-          runAsNonRoot: false
-          privileged: true
       containers:
       - name: elasticsearch
         image: docker.elastic.co/elasticsearch/elasticsearch:7.6.2
