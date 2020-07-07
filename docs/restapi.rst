@@ -17,6 +17,7 @@ The ``Content-Type`` should be set to `multipart/form-data <https://developer.mo
 The following keys are accepted in the request body (you need to specify at least one of them):
 
 * ``data``: a file in a supported file format (CSV, Excel, SPSS...)
+* ``data_profile``: profile information for an input dataset in JSON format (such as returned by the :doc:`python/datamart-profiler` or the :ref:`rest-profile` endpoint) or a token obtained from :ref:`rest-profile`
 * ``query``: JSON object representing the query, according to :ref:`the query API specification <schema-query>`
 
 This endpoint returns a JSON object, according to :ref:`the query results specification <schema-result>`.
@@ -77,6 +78,8 @@ The accepted key/value pairs in the request body are the following:
 
 This endpoint also accepts the ``format`` query parameter, as specified for :ref:`the download endpoint <rest-download>`. However it currently defaults to the ``d3m`` format.
 
+..  _rest-upload:
+
 ``POST /upload``
 ----------------
 
@@ -88,11 +91,59 @@ The request will return the ID of the new dataset immediately, but profiling wil
 
     {"id": "datamart.upload.abcdef1234567890"}
 
+..  _rest-profile:
+
 ``POST /profile``
 -----------------
 
 Profile a dataset. Does not add it to the index.
 
-The computed metadata is returned, similar to using the :doc:`python/datamart-profiler` library directly.
+The computed metadata is returned, similar to using the :doc:`python/datamart-profiler` directly.
 
-This endpoint expects one variable in the request body, ``data``, the contents of a file to be profiled in a supported file format (e.g. CSV, Excel, SPSS...)
+This endpoint expects one variable in the request body, ``data``, the contents of a file to be profiled in a supported file format (e.g. CSV, Excel, SPSS...).
+
+In addition to the profile information, the returned JSON object contains a short string under the key ``token``, which can be used instead of the full data when doing searches (provide it as ``data_profile``).
+
+..  _rest-embed:
+
+Embedding Datamart in your software
+-----------------------------------
+
+Rather than using the API and implementing your own UI for data search and augmentation, it is possible to **re-use our web frontend**, and collect results **directly from Datamart into your system without the user downloading it and then adding it** in your interface.
+
+This can be done using the following 3 steps (4 steps for augmentation):
+
+(optional) Step 0: Provide your input data if searching for augmentations
+*************************************************************************
+
+If you don't have input data to provide, skip this step.
+
+Issue a request ``POST /profile``, providing your data, and get the string under the ``token`` JSON key.
+
+Step 1: Create a session: ``POST /session/new``
+***********************************************
+
+Issue a request ``POST /session/new``, with the following JSON input:
+
+* ``data_token``: the token obtained from ``POST /profile``, if searching for augmentations. Optional.
+* ``format``: the desired format for datasets, as specified for :ref:`the download endpoint <rest-download>`. Options go in the ``format_options`` object. Optional, defaults to ``csv``.
+* ``system_name``: the name of your system. Optional, defaults to "TA3". Will be shown on butttons (e.g. "Add to <system_name>", "Join and add to <system_name>").
+
+The result is a JSON object containing the following:
+
+* ``session_id``: a short string identifying the session. Use this later to retrieve results.
+* ``link_url``: a link to our interface that you can present the user (or embed, etc)
+
+Step 2: Direct the user to Datamart
+***********************************
+
+Direct the user to the ``link_url`` obtained at step 1. Wait for them to be done to move to step 3, or poll step 3 regularly.
+
+The user will be able to use our interface like normal, including using filters and related searches. The download buttons are replaced by "Add to <system_name" buttons.
+
+Step 3: Obtain the selected data from Datamart: ``GET /session/<id>``
+*********************************************************************
+
+Issue a request to ``GET /session/<session_id>``, where ``session_id`` is the short string you obtained in step 1.
+
+The result is an array of JSON objects, under a top-level key ``results``. Each object has a single key, ``url``, at which you can find the data that the user selected (in the format you selected at step 1).

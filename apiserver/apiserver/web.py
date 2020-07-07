@@ -20,6 +20,7 @@ from tornado.routing import URLSpec
 import tornado.httputil
 import tornado.web
 from tornado.web import HTTPError, RequestHandler
+from urllib.parse import urlencode
 import uuid
 import zipfile
 
@@ -173,10 +174,21 @@ class BaseHandler(RequestHandler):
         self.set_status(204)
         return self.finish()
 
+    def validate_format(self, format, format_options):
+        writer_cls = get_writer(format)
+        format_ext = None
+        if hasattr(writer_cls, 'parse_options'):
+            format_options = writer_cls.parse_options(format_options)
+        elif format_options:
+            self.send_error_json(400, "Invalid output options")
+            raise HTTPError(400)
+        if hasattr(writer_cls, 'extension'):
+            format_ext = writer_cls.extension
+        return format, format_options, format_ext
+
     def read_format(self, default_format='csv'):
         format = self.get_query_argument('format', default_format)
         format_options = {}
-        format_ext = None
         for n, v in self.request.query_arguments.items():
             if n.startswith('format_'):
                 if len(v) != 1:
@@ -187,15 +199,14 @@ class BaseHandler(RequestHandler):
                     raise HTTPError(400)
                 format_options[n[7:]] = self.decode_argument(v[0])
 
-        writer_cls = get_writer(format)
-        if hasattr(writer_cls, 'parse_options'):
-            format_options = writer_cls.parse_options(format_options)
-        elif format_options:
-            self.send_error_json(400, "Invalid output options")
-            raise HTTPError(400)
-        if hasattr(writer_cls, 'extension'):
-            format_ext = writer_cls.extension
-        return format, format_options, format_ext
+        return self.validate_format(format, format_options)
+
+    @staticmethod
+    def serialize_format(format, format_options):
+        dct = {'format': format}
+        for k, v in format_options.items():
+            dct['format_' + k] = v
+        return urlencode(dct)
 
     http_client = AsyncHTTPClient(defaults=dict(user_agent="Datamart"))
 
@@ -455,9 +466,14 @@ class BaseDownload(BaseHandler):
 
         materialize = metadata.get('materialize', {})
 
+        session_id = self.get_query_argument('session_id', None)
+
         # If there's a direct download URL
-        if ('direct_url' in materialize and
-                format == 'csv' and not materialize.get('convert')):
+        if (
+            'direct_url' in materialize
+            and not session_id
+            and format == 'csv' and not materialize.get('convert')
+        ):
             if format_options:
                 return await self.send_error_json(
                     400,
@@ -466,11 +482,25 @@ class BaseDownload(BaseHandler):
             # Redirect the client to it
             logger.info("Sending redirect to direct_url")
             return self.redirect(materialize['direct_url'])
-        else:
-            # We want to catch exceptions from get_dataset(), without catching
-            # exceptions from inside the with block
-            # https://docs.python.org/3/library/contextlib.html#catching-exceptions-from-enter-methods
-            stack = contextlib.ExitStack()
+
+        if session_id:
+            self.application.redis.rpush(
+                'session:' + session_id,
+                ('download:' + dataset_id
+                 + '?' + self.serialize_format(format, format_options)),
+            )
+            ret = self.send_json({'success': "attached to session"})
+
+            # Kick off materialization now
+            with get_dataset(
+                metadata, dataset_id,
+                format=format, format_options=format_options,
+            ):
+                pass
+
+            return ret
+
+        with contextlib.ExitStack() as stack:
             try:
                 dataset_path = stack.enter_context(
                     get_dataset(
@@ -481,12 +511,12 @@ class BaseDownload(BaseHandler):
             except Exception:
                 await self.send_error_json(500, "Materializer reports failure")
                 raise
-            with stack:
-                logger.info("Sending file...")
-                return await self.send_file(
-                    dataset_path,
-                    dataset_id + (format_ext or ''),
-                )
+
+            logger.info("Sending file...")
+            return await self.send_file(
+                dataset_path,
+                dataset_id + (format_ext or ''),
+            )
 
 
 class DownloadId(BaseDownload, GracefulHandler):
@@ -658,6 +688,8 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
     async def post(self, stack):
         format, format_options, format_ext = self.read_format('d3m')
 
+        session_id = self.get_query_argument('session_id', None)
+
         type_ = self.request.headers.get('Content-type', '')
         if not type_.startswith('multipart/form-data'):
             return await self.send_error_json(
@@ -772,6 +804,14 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
             format_options=format_options,
         )
 
+        ret = None
+        if session_id:
+            self.application.redis.rpush(
+                'session:' + session_id,
+                'aug:' + key,
+            )
+            ret = self.send_json({'success': "attached to session"})
+
         def create_aug(cache_temp):
             with contextlib.ExitStack() as stack:
                 # Get augmentation data
@@ -808,13 +848,29 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
 
         try:
             with cache_get_or_set('/cache/aug', key, create_aug) as path:
-                # send the file
-                return await self.send_file(
-                    path,
-                    name='augmentation' + (format_ext or ''),
-                )
+                if session_id:
+                    # We already replied
+                    return await ret
+                else:
+                    # send the file
+                    return await self.send_file(
+                        path,
+                        name='augmentation' + (format_ext or ''),
+                    )
         except AugmentationError as e:
             return await self.send_error_json(400, str(e))
+
+
+class AugmentResult(BaseHandler):
+    async def get(self, key):
+        with cache_get('/cache/aug', key) as path:
+            if path:
+                return await self.send_file(
+                    path,
+                    name='augmentation',
+                )
+            else:
+                return self.send_error_json(404, "Data not in cache")
 
 
 class Upload(BaseHandler):
@@ -898,6 +954,91 @@ class Upload(BaseHandler):
         return await self.send_json({'id': dataset_id})
 
 
+class SessionNew(BaseHandler):
+    def post(self):
+        # Read input
+        session = self.get_json()
+        data_token = session.pop('data_token', None)
+        if data_token is not None and (
+            not isinstance(data_token, str)
+            or not _re_token.match(data_token)
+        ):
+            return self.send_error_json(
+                400,
+                "Invalid data_token",
+            )
+        format, format_options, _ = self.validate_format(
+            session.pop('format', 'csv'),
+            session.pop('format_options', {}),
+        )
+        system_name = session.pop('system_name', 'TA3')
+        if session:
+            return self.send_error_json(
+                400,
+                "Unrecognized key %r" % next(iter(session)),
+            )
+
+        # Build an ID for the session
+        session_id = str(uuid.uuid4())
+
+        # Build our session object
+        session = {
+            'session_id': session_id,
+            'format': format,
+            'format_options': format_options,
+            'system_name': system_name,
+        }
+        if data_token:
+            session['data_token'] = data_token
+
+        # Build a link for the user's browser
+        session_json = json.dumps(
+            session,
+            # Compact
+            sort_keys=True, indent=None, separators=(',', ':'),
+        )
+        link_url = (
+            self.application.frontend_url
+            + '/?'
+            + urlencode({'session': session_json})
+        )
+
+        return self.send_json({
+            # Send the session ID to TA3, used to retrieve results
+            'session_id': session_id,
+            # Send the JSON info to the frontend
+            'link_url': link_url,
+        })
+
+
+class SessionGet(BaseHandler):
+    def get(self, session_id):
+        # Get session from Redis
+        datasets = self.application.redis.lrange(
+            'session:' + session_id,
+            0, -1,
+        )
+
+        api_url = self.application.api_url
+        results = []
+        for record in datasets:
+            record = record.decode('utf-8')
+            if record.startswith('download:'):
+                record = record[9:]
+                results.append({
+                    'url': api_url + '/download/' + record,
+                })
+            elif record.startswith('aug:'):
+                record = record[4:]
+                results.append({
+                    'url': api_url + '/augment/' + record,
+                })
+            else:
+                logger.error("Error: invalid entry in session: %r", record)
+
+        return self.send_json({'results': results})
+
+
 class Statistics(BaseHandler):
     def get(self):
         return self.send_json({
@@ -929,6 +1070,8 @@ class Application(GracefulApplication):
 
         self.is_closing = False
 
+        self.frontend_url = os.environ['FRONTEND_URL']
+        self.api_url = os.environ['API_URL']
         self.elasticsearch = es
         self.redis = redis_client
         self.lazo_client = lazo
@@ -1009,7 +1152,10 @@ def make_app(debug=False):
             URLSpec('/download', Download, name='download'),
             URLSpec('/metadata/([^/]+)', Metadata, name='metadata'),
             URLSpec('/augment', Augment, name='augment'),
+            URLSpec('/augment/([^/]+)', AugmentResult, name='augment_result'),
             URLSpec('/upload', Upload, name='upload'),
+            URLSpec('/session/new', SessionNew, name='session_new'),
+            URLSpec('/session/([^/]+)', SessionGet, name='session_get'),
             URLSpec('/statistics', Statistics, name='statistics'),
             URLSpec('/version', Version, name='version'),
             URLSpec('/health', Health, name='health'),

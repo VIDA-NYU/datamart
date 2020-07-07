@@ -5,6 +5,7 @@ import {
   SearchResult,
   RelatedFile,
   InfoBoxType,
+  Session,
 } from '../../api/types';
 import { SearchHit } from './SearchHit';
 import { SearchState } from './SearchState';
@@ -16,6 +17,7 @@ interface SearchResultsProps {
   searchQuery: SearchQuery;
   searchState: SearchState;
   searchResponse?: SearchResponse;
+  session?: Session;
   onSearchRelated: (relatedFile: RelatedFile) => void;
 }
 
@@ -48,7 +50,7 @@ class SearchResults extends React.PureComponent<
   }
 
   render() {
-    const { searchResponse, searchState, searchQuery } = this.props;
+    const { searchResponse, searchState, searchQuery, session } = this.props;
     const centeredDiv: React.CSSProperties = {
       width: 750,
       textAlign: 'center',
@@ -96,12 +98,12 @@ class SearchResults extends React.PureComponent<
             >
               {currentHits.map((hit, idx) => (
                 <SearchHit
-                  searchQuery={searchQuery}
                   hit={hit}
                   key={idx}
                   selectedHit={
                     selectedHit && hit.id === selectedHit.id ? true : false
                   }
+                  session={session}
                   onSearchHitExpand={hit =>
                     this.setState({
                       selectedHit: hit,
@@ -123,6 +125,7 @@ class SearchResults extends React.PureComponent<
                 hit={selectedHit}
                 searchQuery={searchQuery}
                 infoBoxType={selectedInfoBoxType}
+                session={session}
               />
             )}
           </div>

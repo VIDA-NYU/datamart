@@ -89,6 +89,8 @@ services:
       - LAZO_SERVER_HOST=lazo
       - LAZO_SERVER_PORT=50051
       - NOMINATIM_URL=${NOMINATIM_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - API_URL=${API_URL}
     cpu_shares: 10
     ports:
       - 8002

@@ -158,3 +158,10 @@ export enum InfoBoxType {
   DETAIL = 'DETAIL',
   AUGMENTATION = 'AUGMENTATION',
 }
+
+export interface Session {
+  session_id: string;
+  format?: string;
+  format_options?: { [key: string]: string | number };
+  system_name: string;
+}

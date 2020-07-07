@@ -2,14 +2,18 @@ import * as React from 'react';
 import * as Icon from 'react-feather';
 import { API_URL } from '../../config';
 import { formatSize } from '../../utils';
-import { SearchResult, RelatedFile } from '../../api/types';
-import { Description, DataTypes, DatasetColumns } from './Metadata';
-import { SearchQuery } from '../../api/rest';
+import { SearchResult, RelatedFile, Session } from '../../api/types';
+import {
+  Description,
+  DataTypes,
+  DatasetColumns,
+  AddToSession,
+} from './Metadata';
 
 interface SearchHitProps {
-  searchQuery: SearchQuery;
   hit: SearchResult;
   selectedHit?: boolean;
+  session?: Session;
   onSearchHitExpand: (hit: SearchResult) => void;
   onSearchRelated: (relatedFile: RelatedFile) => void;
   onAugmentationOptions: (hit: SearchResult) => void;
@@ -21,18 +25,23 @@ interface SearchHitState {
 
 function DownloadViewDetails(props: {
   hit: SearchResult;
+  session?: Session;
   onSearchHitExpand: () => void;
   onSearchRelated: () => void;
   onAugmentationOptions: () => void;
 }) {
   return (
     <div className="mt-2">
-      <a
-        className="btn btn-sm btn-outline-primary"
-        href={`${API_URL}/download/${props.hit.id}`}
-      >
-        <Icon.Download className="feather" /> Download
-      </a>
+      {props.session ? (
+        <AddToSession hit={props.hit} session={props.session} />
+      ) : (
+        <a
+          className="btn btn-sm btn-outline-primary"
+          href={`${API_URL}/download/${props.hit.id}`}
+        >
+          <Icon.Download className="feather" /> Download
+        </a>
+      )}
       <button
         className="btn btn-sm btn-outline-primary ml-2"
         onClick={props.onSearchHitExpand}
@@ -101,7 +110,7 @@ class SearchHit extends React.PureComponent<SearchHitProps, SearchHitState> {
   }
 
   render() {
-    const { hit, selectedHit } = this.props;
+    const { hit, selectedHit, session } = this.props;
     return (
       <div
         className="card mb-3 shadow-sm d-flex flex-row"
@@ -118,6 +127,7 @@ class SearchHit extends React.PureComponent<SearchHitProps, SearchHitState> {
           <DataTypes hit={hit} label={false} />
           <DownloadViewDetails
             hit={hit}
+            session={session}
             onSearchHitExpand={this.onSearchHitExpand}
             onSearchRelated={this.onSearchRelated}
             onAugmentationOptions={this.onAugmentationOptions}

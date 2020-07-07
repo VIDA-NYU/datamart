@@ -6,6 +6,7 @@ import {
   Metadata,
   QuerySpec,
   RelatedFile,
+  Session,
 } from './types';
 import { API_URL } from '../config';
 
@@ -27,6 +28,12 @@ export const DEFAULT_SOURCES = [
 export enum RequestResult {
   SUCCESS = 'SUCCESS',
   ERROR = 'ERROR',
+}
+
+export enum RequestStatus {
+  SUCCESS = 'SUCCESS',
+  ERROR = 'ERROR',
+  IN_PROGRESS = 'IN_PROGRESS',
 }
 
 export interface Response<T> {
@@ -82,9 +89,23 @@ export function search(q: SearchQuery): Promise<Response<SearchResponse>> {
     });
 }
 
+export function downloadToSession(datasetId: string, session: Session) {
+  let url = `/download?session_id=${session.session_id}`;
+  if (session.format) {
+    url += `&format=${encodeURIComponent(session.format)}`;
+  }
+  if (session.format_options) {
+    Object.entries(session.format_options).forEach(([key, value]) => {
+      url += `&format_${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    });
+  }
+  return api.post(url, { id: datasetId }).then(() => {});
+}
+
 export function augment(
   data: RelatedFile,
-  task: SearchResult
+  task: SearchResult,
+  session?: Session
 ): Promise<Response<Blob>> {
   const formData = new FormData();
   formData.append('task', JSON.stringify(task));
@@ -102,8 +123,22 @@ export function augment(
       'content-type': 'multipart/form-data',
     },
   };
+  let url = '/augment';
+  if (session) {
+    url += `?session_id=${session.session_id}`;
+    if (session.format) {
+      url += `&format=${encodeURIComponent(session.format)}`;
+    }
+    if (session.format_options) {
+      Object.entries(session.format_options).forEach(([key, value]) => {
+        url += `&format_${encodeURIComponent(key)}=${encodeURIComponent(
+          value
+        )}`;
+      });
+    }
+  }
   return api
-    .post('/augment', formData, config)
+    .post(url, formData, config)
     .then((response: AxiosResponse) => {
       if (response.status !== 200) {
         throw new Error('Status ' + response.status);

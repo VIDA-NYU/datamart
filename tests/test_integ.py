@@ -8,6 +8,7 @@ import re
 import requests
 import tempfile
 import time
+from urllib.parse import urlparse, urlunparse, parse_qs
 import yaml
 import zipfile
 
@@ -2043,6 +2044,279 @@ class TestUpload(DatamartTest):
                 dataset_id,
                 lazo_client,
             )
+
+
+class TestSession(DatamartTest):
+    def test_session_new(self):
+        def new_session(obj):
+            response = self.datamart_post(
+                '/session/new',
+                json=obj,
+            )
+            obj = response.json()
+            session_id = obj.pop('session_id')
+            link_url = obj.pop('link_url')
+            self.assertFalse(obj.keys())
+            link_url = urlparse(link_url)
+            self.assertEqual(
+                urlunparse(link_url[:4] + (('',) * 2)),
+                os.environ['FRONTEND_URL'] + '/',
+            )
+            query = parse_qs(link_url.query)
+            session, = query['session']
+            self.assertFalse(obj.keys())
+            return session_id, json.loads(session)
+
+        session_id, session_obj = new_session({})
+        self.assertEqual(
+            session_obj,
+            {
+                'format': 'csv',
+                'format_options': {},
+                'session_id': session_id,
+                'system_name': 'TA3',
+            },
+        )
+
+        session_id, session_obj = new_session({'data_token': 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3'})
+        self.assertEqual(
+            session_obj,
+            {
+                'format': 'csv',
+                'format_options': {},
+                'session_id': session_id,
+                'data_token': 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3',
+                'system_name': 'TA3',
+            },
+        )
+
+        session_id, session_obj = new_session({
+            'system_name': 'Modeler',
+            'format': 'd3m',
+        })
+        self.assertEqual(
+            session_obj,
+            {
+                'format': 'd3m',
+                'format_options': {'need_d3mindex': False, 'version': '4.0.0'},
+                'session_id': session_id,
+                'system_name': 'Modeler',
+            },
+        )
+
+        response = self.datamart_post(
+            '/session/new',
+            json={'unknown_key': 'value'},
+            check_status=False,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            {'error': "Unrecognized key 'unknown_key'"},
+        )
+
+    def test_download_csv(self):
+        session_id = self.datamart_post(
+            '/session/new',
+            json={'format': 'csv'},
+        ).json()['session_id']
+
+        response = self.datamart_get(
+            '/download/' + 'datamart.test.basic'
+            + '?session_id=' + session_id
+        )
+        self.assertEqual(response.json(), {'success': "attached to session"})
+
+        response = self.datamart_get(
+            '/download/' + 'datamart.test.agg'
+            + '?session_id=' + session_id
+        )
+        self.assertEqual(response.json(), {'success': "attached to session"})
+
+        response = self.datamart_get('/session/' + session_id)
+        self.assertEqual(
+            response.json(),
+            {
+                'results': [
+                    {
+                        'url': (os.environ['API_URL']
+                                + '/download/datamart.test.basic'
+                                + '?format=csv'),
+                    },
+                    {
+                        'url': (os.environ['API_URL']
+                                + '/download/datamart.test.agg'
+                                + '?format=csv'),
+                    },
+                ],
+            },
+        )
+
+    def test_download_d3m(self):
+        session_id = self.datamart_post(
+            '/session/new',
+            json={'format': 'd3m'},
+        ).json()['session_id']
+
+        response = self.datamart_get(
+            '/download/' + 'datamart.test.basic'
+            + f'?session_id={session_id}&format=d3m'
+        )
+        self.assertEqual(response.json(), {'success': "attached to session"})
+
+        response = self.datamart_get(
+            '/download/' + 'datamart.test.agg'
+            + f'?session_id={session_id}&format=d3m'
+        )
+        self.assertEqual(response.json(), {'success': "attached to session"})
+
+        response = self.datamart_get('/session/' + session_id)
+        format_query = (
+            'format=d3m'
+            + '&format_version=4.0.0'
+            + '&format_need_d3mindex=False'
+        )
+        self.assertEqual(
+            response.json(),
+            {
+                'results': [
+                    {
+                        'url': (
+                            os.environ['API_URL']
+                            + '/download/datamart.test.basic'
+                            + '?' + format_query
+                        ),
+                    },
+                    {
+                        'url': (os.environ['API_URL']
+                                + '/download/datamart.test.agg'
+                                + '?' + format_query),
+                    },
+                ],
+            },
+        )
+
+    def test_augment_csv(self):
+        session_id = self.datamart_post(
+            '/session/new',
+            json={'format': 'csv'},
+        ).json()['session_id']
+
+        meta = self.datamart_get(
+            '/metadata/' + 'datamart.test.basic',
+            schema=metadata_schema,
+        )
+        meta = meta.json()['metadata']
+
+        task = {
+            'id': 'datamart.test.basic',
+            'metadata': meta,
+            'score': 1.0,
+            'augmentation': {
+                'left_columns': [[0]],
+                'left_columns_names': [['number']],
+                'right_columns': [[2]],
+                'right_columns_names': [['number']],
+                'type': 'join'
+            },
+            'supplied_id': None,
+            'supplied_resource_id': None
+        }
+
+        with data('basic_aug.csv') as basic_aug:
+            response = self.datamart_post(
+                '/augment'
+                + f'?session_id={session_id}&format=csv',
+                files={
+                    'task': json.dumps(task).encode('utf-8'),
+                    'data': basic_aug,
+                },
+            )
+        self.assertEqual(response.json(), {'success': "attached to session"})
+
+        response = self.datamart_get('/session/' + session_id)
+        self.assertJson(
+            response.json(),
+            {
+                'results': [
+                    {
+                        'url': lambda u: u.startswith(
+                            os.environ['API_URL'] + '/augment/'
+                        ),
+                    },
+                ],
+            },
+        )
+        result_id = response.json()['results'][0]['url'][-40:]
+
+        response = self.datamart_get(
+            '/augment/' + result_id,
+        )
+        self.assertEqual(
+            response.headers['Content-Type'],
+            'application/octet-stream',
+        )
+
+    def test_augment_d3m(self):
+        session_id = self.datamart_post(
+            '/session/new',
+            json={'format': 'd3m'},
+        ).json()['session_id']
+
+        meta = self.datamart_get(
+            '/metadata/' + 'datamart.test.basic',
+            schema=metadata_schema,
+        )
+        meta = meta.json()['metadata']
+
+        task = {
+            'id': 'datamart.test.basic',
+            'metadata': meta,
+            'score': 1.0,
+            'augmentation': {
+                'left_columns': [[0]],
+                'left_columns_names': [['number']],
+                'right_columns': [[2]],
+                'right_columns_names': [['number']],
+                'type': 'join'
+            },
+            'supplied_id': None,
+            'supplied_resource_id': None
+        }
+
+        with data('basic_aug.csv') as basic_aug:
+            response = self.datamart_post(
+                '/augment'
+                + f'?session_id={session_id}&format=d3m',
+                files={
+                    'task': json.dumps(task).encode('utf-8'),
+                    'data': basic_aug,
+                },
+            )
+        self.assertEqual(response.json(), {'success': "attached to session"})
+
+        response = self.datamart_get('/session/' + session_id)
+        self.assertJson(
+            response.json(),
+            {
+                'results': [
+                    {
+                        'url': lambda u: u.startswith(
+                            os.environ['API_URL'] + '/augment/'
+                        ),
+                    },
+                ],
+            },
+        )
+        result_id = response.json()['results'][0]['url'][-40:]
+
+        response = self.datamart_get(
+            '/augment/' + result_id,
+        )
+        self.assertEqual(
+            response.headers['Content-Type'],
+            'application/zip',
+        )
 
 
 version = os.environ['DATAMART_VERSION']

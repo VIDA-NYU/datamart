@@ -239,7 +239,9 @@ class D3mWriter(object):
                 "Invalid format option %r" % (next(iter(unknown_keys)),)
             )
         merged_options['need_d3mindex'] = (
-            merged_options['need_d3mindex'] in (True, 'True', 'true', '1')
+            merged_options['need_d3mindex'] not in (
+                False, '', 'False', 'false', '0', 'off', 'no',
+            )
         )
         return merged_options
 

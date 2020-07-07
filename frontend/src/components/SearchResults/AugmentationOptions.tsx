@@ -4,6 +4,7 @@ import {
   SearchResult,
   AugmentationInfo,
   ColumnAggregations,
+  Session,
 } from '../../api/types';
 import * as api from '../../api/rest';
 import { SearchQuery } from '../../api/rest';
@@ -14,6 +15,7 @@ import { ColumnBadge, SimpleColumnBadge } from '../Badges/Badges';
 interface AugmentationOptionsProps {
   hit: SearchResult;
   searchQuery: SearchQuery;
+  session?: Session;
 }
 
 interface AugmentationOptionsState {
@@ -21,6 +23,7 @@ interface AugmentationOptionsState {
     [id: string]: boolean;
   };
   columnAggregations?: ColumnAggregations;
+  result?: api.RequestStatus;
 }
 
 function getAugmentationColumns(aug?: AugmentationInfo) {
@@ -124,18 +127,54 @@ class AugmentationOptions extends React.PureComponent<
 
     console.log('submit', task);
 
-    api.augment(relatedFile, task).then(response => {
-      const zipFile = response.data;
-      if (zipFile) {
-        triggerFileDownload(zipFile, 'augmentation.zip');
-      } else {
-        console.error('Augment API call returned invalid file: ', zipFile);
-      }
-    });
+    const { session } = this.props;
+    api
+      .augment(relatedFile, task, session)
+      .then(response => {
+        this.setState({ result: api.RequestStatus.SUCCESS });
+        if (!session) {
+          const zipFile = response.data;
+          if (zipFile) {
+            triggerFileDownload(zipFile, 'augmentation.zip');
+          } else {
+            console.error('Augment API call returned invalid file: ', zipFile);
+          }
+        }
+      })
+      .catch(() => this.setState({ result: api.RequestStatus.ERROR }));
+    this.setState({ result: api.RequestStatus.IN_PROGRESS });
   }
 
   renderAugmentButton(hit: SearchResult, type: string) {
-    const btnActive = this.findIndexesOfCheckedColumn().length > 0;
+    const { session } = this.props;
+    const { result } = this.state;
+    let btnActive = this.findIndexesOfCheckedColumn().length > 0;
+    let text = `Merge`;
+    if (session) {
+      if (result === undefined) {
+        text = `Merge (${type}) & Add to ${session.system_name}`;
+      } else if (result === api.RequestStatus.IN_PROGRESS) {
+        text = `Merging...`;
+        btnActive = false;
+      } else if (result === api.RequestStatus.SUCCESS) {
+        text = `Added to ${session.system_name}!`;
+        btnActive = false;
+      } else if (result === api.RequestStatus.ERROR) {
+        text = 'Error merging';
+      }
+    } else {
+      if (result === undefined) {
+        text = `Merge (${type}) & Download`;
+      } else if (result === api.RequestStatus.IN_PROGRESS) {
+        text = `Merging...`;
+        btnActive = false;
+      } else if (result === api.RequestStatus.SUCCESS) {
+        text = `Downloaded`;
+        // Keep button active, if user didn't save file
+      } else if (result === api.RequestStatus.ERROR) {
+        text = 'Error merging';
+      }
+    }
     const btnClass = `btn btn-sm btn-outline-primary mt-2${
       btnActive ? '' : ' disabled'
     }`;
@@ -144,9 +183,7 @@ class AugmentationOptions extends React.PureComponent<
       : undefined;
     return (
       <button className={btnClass} onClick={btnOnClick}>
-        <Icon.Download className="feather" /> Merge{' '}
-        <span style={{ textTransform: 'uppercase' }}>({type}) </span>
-        &amp; Download
+        <Icon.Download className="feather" /> {text}
       </button>
     );
   }

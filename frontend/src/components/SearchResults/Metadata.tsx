@@ -1,8 +1,8 @@
 import React from 'react';
 import * as Icon from 'react-feather';
 import { API_URL } from '../../config';
-import { SearchResult } from '../../api/types';
-import { ColumnMetadata } from '../../api/types';
+import { SearchResult, ColumnMetadata, Session } from '../../api/types';
+import { RequestStatus, downloadToSession } from '../../api/rest';
 import { generateRandomId } from '../../utils';
 import { GeoSpatialCoverageMap } from '../GeoSpatialCoverageMap/GeoSpatialCoverageMap';
 import {
@@ -52,26 +52,93 @@ export function DataTypes(props: { hit: SearchResult; label?: boolean }) {
   );
 }
 
-export function DownloadButtons(props: { hit: SearchResult }) {
-  const { hit } = props;
-  return (
-    <>
+export class AddToSession extends React.PureComponent<
+  { hit: SearchResult; session: Session },
+  { result?: RequestStatus }
+> {
+  constructor(props: { hit: SearchResult; session: Session }) {
+    super(props);
+    this.state = { result: undefined };
+  }
+
+  render() {
+    const { hit, session } = this.props;
+
+    const clicked = (e: React.MouseEvent) => {
+      e.preventDefault();
+      downloadToSession(hit.id, session).then(
+        () => this.setState({ result: RequestStatus.SUCCESS }),
+        () => this.setState({ result: RequestStatus.ERROR })
+      );
+      this.setState({ result: RequestStatus.IN_PROGRESS });
+    };
+
+    const { result } = this.state;
+    if (result === undefined) {
+      return (
+        <button
+          className="btn btn-sm btn-outline-primary ml-2"
+          onClick={clicked}
+        >
+          <Icon.Download className="feather" /> Add to {session.system_name}
+        </button>
+      );
+    } else if (result === RequestStatus.IN_PROGRESS) {
+      return (
+        <button className="btn btn-sm btn-outline-primary ml-2 disabled">
+          <Icon.Download className="feather" /> Adding to {session.system_name}
+          ...
+        </button>
+      );
+    } else if (result === RequestStatus.SUCCESS) {
+      return (
+        <button className="btn btn-sm btn-outline-primary ml-2 disabled">
+          <Icon.Download className="feather" /> Added to {session.system_name}!
+        </button>
+      );
+    } else if (result === RequestStatus.ERROR) {
+      return (
+        <button
+          className="btn btn-sm btn-outline-primary ml-2"
+          onClick={clicked}
+        >
+          <Icon.Download className="feather" /> Error adding to session
+        </button>
+      );
+    } else {
+      throw new Error('Invalid RequestStatus');
+    }
+  }
+}
+
+export function DownloadButtons(props: {
+  hit: SearchResult;
+  session?: Session;
+}) {
+  const { hit, session } = props;
+  if (session) {
+    return (
       <div className="mt-2">
-        <b>Download: </b>
-        <a
-          className="btn btn-sm btn-outline-primary ml-2"
-          href={`${API_URL}/download/${hit.id}`}
-        >
-          <Icon.Download className="feather" /> CSV
-        </a>
-        <a
-          className="btn btn-sm btn-outline-primary ml-2"
-          href={`${API_URL}/download/${hit.id}?format=d3m`}
-        >
-          <Icon.Download className="feather" /> D3M
-        </a>
+        <AddToSession hit={hit} session={session} />
       </div>
-    </>
+    );
+  }
+  return (
+    <div className="mt-2">
+      <b>Download: </b>
+      <a
+        className="btn btn-sm btn-outline-primary ml-2"
+        href={`${API_URL}/download/${hit.id}`}
+      >
+        <Icon.Download className="feather" /> CSV
+      </a>
+      <a
+        className="btn btn-sm btn-outline-primary ml-2"
+        href={`${API_URL}/download/${hit.id}?format=d3m`}
+      >
+        <Icon.Download className="feather" /> D3M
+      </a>
+    </div>
   );
 }
 

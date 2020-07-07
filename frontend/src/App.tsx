@@ -41,7 +41,11 @@ class App extends React.Component {
               render={routeProps => (
                 <>
                   <MainMenu />
-                  <SearchApp />
+                  <SearchApp
+                    history={routeProps.history}
+                    match={routeProps.match}
+                    location={routeProps.location}
+                  />
                 </>
               )}
             />
