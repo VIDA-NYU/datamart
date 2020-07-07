@@ -25,7 +25,7 @@ metadata:
     what: elasticsearch
 spec:
   serviceName: elasticsearch-cluster
-  replicas: 2
+  replicas: 1
   updateStrategy:
     type: RollingUpdate
   selector:
