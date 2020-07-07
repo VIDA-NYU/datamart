@@ -9,7 +9,7 @@ data:
   elasticsearch.cluster_name: "docker-cluster"
   elasticsearch.heap_size: "4g"
   api_url: http://192.168.99.100:30081
-  nominatim_url: http://nominatim
+  nominatim_url: http://nominatim:8080/
   redis.conf: |
     maxmemory 500mb
     maxmemory-policy allkeys-lru
