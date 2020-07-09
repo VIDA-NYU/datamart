@@ -44,7 +44,7 @@ class TestSearch(unittest.TestCase):
                         'filter': [
                             {
                                 'terms': {
-                                    'source': 'gov',
+                                    'source': ['gov'],
                                 },
                             },
                         ],
@@ -88,7 +88,7 @@ class TestSearch(unittest.TestCase):
     def test_ranges(self):
         main, sup_funcs, sup_filters, vars = parse_query({
             'keywords': ['green', 'taxi'],
-            'source': 'gov',
+            'source': ['gov'],
             'variables': [
                 {
                     'type': 'temporal_variable',
@@ -139,7 +139,7 @@ class TestSearch(unittest.TestCase):
                         'filter': [
                             {
                                 'terms': {
-                                    'source': 'gov',
+                                    'source': ['gov'],
                                 },
                             },
                         ],

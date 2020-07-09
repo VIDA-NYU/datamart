@@ -890,7 +890,7 @@ class Upload(BaseHandler):
             if value:
                 if 'type' in opts:
                     type_ = opts['type']
-                    if type_ == 'int':
+                    if type_ == 'integer':
                         value = int(value)
                     elif type_ == 'float':
                         value = float(value)
@@ -1103,6 +1103,7 @@ class Application(GracefulApplication):
                         or not isinstance(opts['label'], str)
                         or not isinstance(opts['required'], bool)
                         or not isinstance(opts['type'], str)
+                        or opts['type'] not in ('integer', 'text', 'keyword')
                     ):
                         raise ValueError("Invalid custom field %s" % field)
 

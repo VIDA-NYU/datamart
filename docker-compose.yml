@@ -129,6 +129,7 @@ services:
       - AMQP_PASSWORD=${AMQP_PASSWORD}
       - API_URL=${API_URL}
       - MAX_CACHE_BYTES=100000000000  # 100 GB
+      - CUSTOM_FIELDS=${CUSTOM_FIELDS}
     # CI: command: ["bash", "-c", "set -m; COVERAGE_FILE=/cov/.coverage python -Wd -m coverage run --branch -p -m coordinator & PROCESS=$$!; trap \"kill -INT $$PROCESS\" INT TERM; wait $$PROCESS; wait $$PROCESS"]
     cpu_shares: 100
     ports:

@@ -216,7 +216,11 @@ class TestProfiler(DataTestCase):
                 'coordinator', 'elasticsearch.yml') as stream:
             expected = yaml.safe_load(stream)
         expected.pop('_refs', None)
+
+        # Remove 'lazo' index
         actual.pop('lazo', None)
+
+        # Remove variable sections
         for index in expected.values():
             index.setdefault('aliases', {})
             hide_default_analyzers(index)
@@ -229,7 +233,18 @@ class TestProfiler(DataTestCase):
             settings.pop('provided_name', None)
             settings.pop('uuid', None)
             settings.pop('version', None)
-        self.assertEqual(actual, expected)
+
+        # Add custom fields
+        for idx, prefix in [
+            ('datamart', ''),
+            ('datamart_columns', 'dataset_'),
+            ('datamart_spatial_coverage', 'dataset_'),
+        ]:
+            props = expected[idx]['mappings']['properties']
+            props[prefix + 'specialId'] = {'type': 'integer'}
+            props[prefix + 'dept'] = {'type': 'keyword'}
+
+        self.assertJson(actual, expected)
 
 
 class TestProfileQuery(DatamartTest):
@@ -378,7 +393,7 @@ class TestSearch(DatamartTest):
         # All datasets from given source
         response = self.datamart_post(
             '/search',
-            json={'source': ['fernando']},
+            json={'source': 'fernando'},
             schema=result_list_schema,
         )
         results = response.json()['results']

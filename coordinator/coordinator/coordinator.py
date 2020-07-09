@@ -45,7 +45,7 @@ class Coordinator(object):
         if custom_fields:
             custom_fields = json.loads(custom_fields)
             if custom_fields:
-                for field, opts in custom_fields:
+                for field, opts in custom_fields.items():
                     for idx, name in [
                         ('datamart', field),
                         ('datamart_columns', 'dataset_' + field),
