@@ -174,7 +174,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: registry.gitlab.com/vida-nyu/datamart/datamart/frontend:v0.6.2-167-g96c580a2
+        image: registry.gitlab.com/vida-nyu/datamart/datamart/frontend:v0.6.2-178-g24cd5d73
         imagePullPolicy: IfNotPresent
         env:
         - name: API_URL
@@ -213,7 +213,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: web
-        image: registry.gitlab.com/vida-nyu/datamart/datamart/apiserver:v0.6.2-167-g96c580a2
+        image: registry.gitlab.com/vida-nyu/datamart/datamart/apiserver:v0.6.2-178-g24cd5d73
         imagePullPolicy: IfNotPresent
         env:
         - name: ELASTICSEARCH_HOSTS
@@ -253,6 +253,11 @@ spec:
             configMapKeyRef:
               name: config
               key: frontend_url
+        - name: CUSTOM_FIELDS
+          valueFrom:
+            configMapKeyRef:
+              name: config
+              key: custom_fields
         ports:
         - containerPort: 8002
         volumeMounts:
@@ -314,7 +319,7 @@ spec:
           name: cache
       containers:
       - name: web
-        image: registry.gitlab.com/vida-nyu/datamart/datamart/coordinator:v0.6.2-167-g96c580a2
+        image: registry.gitlab.com/vida-nyu/datamart/datamart/coordinator:v0.6.2-178-g24cd5d73
         imagePullPolicy: IfNotPresent
         env:
         - name: ELASTICSEARCH_HOSTS
@@ -383,7 +388,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: web
-        image: registry.gitlab.com/vida-nyu/datamart/datamart/profiler:v0.6.2-167-g96c580a2
+        image: registry.gitlab.com/vida-nyu/datamart/datamart/profiler:v0.6.2-178-g24cd5d73
         imagePullPolicy: IfNotPresent
         env:
         - name: ELASTICSEARCH_HOSTS

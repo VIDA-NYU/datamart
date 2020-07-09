@@ -19,6 +19,8 @@ interface UploadFormState {
   address?: string;
   validation: Validation;
   submitting: boolean;
+  customFields?: api.CustomFields;
+  customValues: Map<string, string>;
 }
 
 interface UploadFormProps {
@@ -32,6 +34,20 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
   constructor(props: UploadFormProps) {
     super(props);
     this.state = this.initialState();
+    api.customFields().then(customFields => {
+      this.setState(prevState => {
+        // Filter the values
+        const customFieldIds = Object.getOwnPropertyNames(customFields);
+        const customValues: Map<string, string> = new Map();
+        prevState.customValues.forEach((value, field) => {
+          if (customFieldIds.includes(field)) {
+            customValues.set(field, value);
+          }
+        });
+
+        return { customFields, customValues };
+      });
+    });
     this.onFormSubmit = this.onFormSubmit.bind(this);
   }
 
@@ -42,6 +58,7 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
       description: '',
       validation: { valid: true, errors: {} },
       submitting: false,
+      customValues: new Map(),
     };
   }
 
@@ -57,6 +74,7 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
         address: this.state.address ? this.state.address : undefined,
         name: this.state.name,
         description: this.state.description,
+        customFields: this.state.customValues,
       });
       if (success) {
         this.setState(this.initialState());
@@ -95,6 +113,31 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
   }
 
   render() {
+    let customFields = <p>Loading custom fields...</p>;
+    if (this.state.customFields !== undefined) {
+      customFields = (
+        <>
+          {Object.entries(this.state.customFields).map(([f, opts]) => (
+            <FormGroup for={`upload-${f}`} label={opts.label} key={f}>
+              <input
+                type="text"
+                id={`upload-${f}`}
+                className="form-control"
+                value={this.state.customValues.get(f) || ''}
+                onChange={e => {
+                  const value = e.target.value;
+                  this.setState(prevState => {
+                    const customValues = new Map(prevState.customValues);
+                    customValues.set(f, value);
+                    return { customValues };
+                  });
+                }}
+              />
+            </FormGroup>
+          ))}
+        </>
+      );
+    }
     return (
       <form onSubmit={this.onFormSubmit}>
         {this.props.type === 'upload' && (
@@ -159,6 +202,7 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
             onChange={e => this.setState({ description: e.target.value })}
           />
         </FormGroup>
+        {customFields}
         <FormGroup>
           <SubmitButton label="Upload" loading={this.state.submitting} />
         </FormGroup>
@@ -214,6 +258,7 @@ class Upload extends React.PureComponent<{}, UploadState> {
   }
 
   async onFormSubmit(data: api.UploadData) {
+    this.setState({ success: undefined, failed: undefined });
     try {
       const result = await api.upload(data);
       if (result.status === 200) {

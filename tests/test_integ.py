@@ -1952,6 +1952,8 @@ class TestUpload(DatamartTest):
                 'address': 'http://test-discoverer:7000/basic.csv',
                 'name': 'basic reupload',
                 'description': "sent through upload endpoint",
+                'specialId': 12,
+                'dept': "internal",
             },
             schema={
                 'type': 'object',
@@ -1984,6 +1986,8 @@ class TestUpload(DatamartTest):
                         'metadata': {
                             'name': 'basic reupload',
                             'description': 'sent through upload endpoint',
+                            'specialId': 12,
+                            'dept': "internal",
                             'source': 'upload',
                             'materialize': {
                                 'identifier': 'datamart.url',
@@ -2018,6 +2022,8 @@ class TestUpload(DatamartTest):
                     id=dataset_id,
                     name='basic reupload',
                     description="sent through upload endpoint",
+                    specialId=12,
+                    dept="internal",
                     source='upload',
                     materialize=dict(
                         basic_metadata['materialize'],

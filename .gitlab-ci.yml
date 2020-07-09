@@ -58,9 +58,7 @@ test:
 
     # Set up environment for testing
     - cp tests/ci.env .env
-    - cat .env | while read l; do [ -z "$l" ] || [ "${l:0:1}" = \# ] || echo "export $l"; done >.env.sh && . .env.sh
-    - export DATAMART_VERSION=$(git describe)
-    - export DATAMART_GEO_DATA=$(pwd)/lib_geo/data
+    - . scripts/load_env.sh
     - "sed -i 's/# CI: //' docker-compose.yml base.Dockerfile */Dockerfile"
     - "sed -i '/# NOTCI$/d' docker-compose.yml base.Dockerfile */Dockerfile"
     - mkdir cov

@@ -58,7 +58,7 @@ When using the ``d3m`` format, the structure for the ZIP file follows the D3M fo
 ``GET /download/<id>``
 ----------------------
 
-Downloads a dataset from DataMart, where id is the dataset identifier. It also accepts one query parameter, ``format``, as specified above.
+Downloads a dataset from DataMart, where ``<id>`` is the dataset identifier. It also accepts one query parameter, ``format``, as specified above.
 
 ..  _rest-augment:
 
@@ -139,11 +139,11 @@ Step 2: Direct the user to Datamart
 
 Direct the user to the ``link_url`` obtained at step 1. Wait for them to be done to move to step 3, or poll step 3 regularly.
 
-The user will be able to use our interface like normal, including using filters and related searches. The download buttons are replaced by "Add to <system_name" buttons.
+The user will be able to use our interface like normal, including using filters and related searches. The download buttons are replaced by "Add to <system_name>" buttons.
 
 Step 3: Obtain the selected data from Datamart: ``GET /session/<id>``
 *********************************************************************
 
-Issue a request to ``GET /session/<session_id>``, where ``session_id`` is the short string you obtained in step 1.
+Issue a request to ``GET /session/<session_id>``, where ``<session_id>`` is the short string you obtained in step 1.
 
 The result is an array of JSON objects, under a top-level key ``results``. Each object has a single key, ``url``, at which you can find the data that the user selected (in the format you selected at step 1).

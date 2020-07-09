@@ -40,6 +40,20 @@ class Coordinator(object):
                 'coordinator', 'elasticsearch.yml') as stream:
             indices = yaml.safe_load(stream)
         indices.pop('_refs', None)
+        # Add custom fields
+        custom_fields = os.environ.get('CUSTOM_FIELDS', None)
+        if custom_fields:
+            custom_fields = json.loads(custom_fields)
+            if custom_fields:
+                for field, opts in custom_fields:
+                    for idx, name in [
+                        ('datamart', field),
+                        ('datamart_columns', 'dataset_' + field),
+                        ('datamart_spatial_coverage', 'dataset_' + field),
+                    ]:
+                        indices[idx]['mappings']['properties'][name] = {
+                            'type': opts['type'],
+                        }
         # Retry a few times, in case the Elasticsearch container is not yet up
         for i in itertools.count():
             try:

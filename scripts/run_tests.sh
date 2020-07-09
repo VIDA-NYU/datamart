@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export PATH="$HOME/bin:$PATH"
-
 cd "$(dirname "$(dirname "$0")")"
 
 set -eux
@@ -39,12 +37,9 @@ fi
 
 # Load .env
 set +x
-cat .env | while read l; do [ -z "$l" ] || [ "${l:0:1}" = \# ] || echo "export $l"; done >.env.sh && . .env.sh && rm .env.sh
+. scripts/load_env.sh
 set -x
-
-# Set other variables
 export DATAMART_VERSION=v0.0
-export DATAMART_GEO_DATA=$(pwd)/lib_geo/data
 
 # Run tests
 poetry run python tests

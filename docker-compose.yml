@@ -91,6 +91,7 @@ services:
       - NOMINATIM_URL=${NOMINATIM_URL}
       - FRONTEND_URL=${FRONTEND_URL}
       - API_URL=${API_URL}
+      - CUSTOM_FIELDS=${CUSTOM_FIELDS}
     cpu_shares: 10
     ports:
       - 8002

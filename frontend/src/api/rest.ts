@@ -155,11 +155,20 @@ export function augment(
     });
 }
 
+export interface CustomFields {
+  [id: string]: {
+    label: string;
+    required: boolean;
+    type: string;
+  };
+}
+
 export interface UploadData {
   name: string;
   description?: string;
   address?: string;
   file?: File;
+  customFields: Map<string, string>;
 }
 
 export function upload(data: UploadData) {
@@ -175,6 +184,11 @@ export function upload(data: UploadData) {
   } else if (data.file) {
     formData.append('file', data.file);
   }
+
+  // Custom fields
+  data.customFields.forEach((value, field) => {
+    formData.append(field, value);
+  });
 
   const config: AxiosRequestConfig = {
     maxRedirects: 0,
@@ -222,6 +236,7 @@ export interface Status {
   sources_counts: {
     [source: string]: number;
   };
+  custom_fields?: CustomFields;
 }
 
 export async function status(): Promise<Status> {
@@ -229,13 +244,18 @@ export async function status(): Promise<Status> {
   return response.data;
 }
 
-let sourcesPromise: Promise<string[]> | undefined = undefined;
+let statusPromise: Promise<Status> | undefined = undefined;
 
 export function sources(): Promise<string[]> {
-  if (!sourcesPromise) {
-    sourcesPromise = status().then(response =>
-      Object.keys(response.sources_counts)
-    );
+  if (!statusPromise) {
+    statusPromise = status();
   }
-  return sourcesPromise;
+  return statusPromise.then(response => Object.keys(response.sources_counts));
+}
+
+export function customFields(): Promise<CustomFields> {
+  if (!statusPromise) {
+    statusPromise = status();
+  }
+  return statusPromise.then(response => response.custom_fields || {});
 }

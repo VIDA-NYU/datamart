@@ -876,18 +876,34 @@ class AugmentResult(BaseHandler):
 class Upload(BaseHandler):
     @PROM_UPLOAD.async_()
     async def post(self):
+        metadata = dict(
+            name=self.get_body_argument('name', None),
+            source='upload',
+            materialize=dict(identifier='datamart.upload',
+                             date=datetime.utcnow().isoformat() + 'Z'),
+        )
+        description = self.get_body_argument('description', None)
+        if description:
+            metadata['description'] = description
+        for field, opts in self.application.custom_fields.items():
+            value = self.get_body_argument(field, None)
+            if value:
+                if 'type' in opts:
+                    type_ = opts['type']
+                    if type_ == 'int':
+                        value = int(value)
+                    elif type_ == 'float':
+                        value = float(value)
+                metadata[field] = value
+            elif opts.get('required', False):
+                return await self.send_error_json(
+                    400,
+                    "Missing field %s" % field,
+                )
+
         if 'file' in self.request.files:
             file = self.request.files['file'][0]
-            metadata = dict(
-                filename=file.filename,
-                name=self.get_body_argument('name', None),
-                source='upload',
-                materialize=dict(identifier='datamart.upload',
-                                 date=datetime.utcnow().isoformat() + 'Z'),
-            )
-            description = self.get_body_argument('description', None)
-            if description:
-                metadata['description'] = description
+            metadata['filename'] = file.filename
             dataset_id = 'datamart.upload.%s' % uuid.uuid4().hex
 
             # Write file to shared storage
@@ -910,17 +926,11 @@ class Upload(BaseHandler):
                     ),
                 )
 
-            # Metadata with 'direct_url' in materialization info
-            metadata = dict(
-                name=self.get_body_argument('name', None),
-                source='upload',
-                materialize=dict(identifier='datamart.url',
-                                 direct_url=address,
-                                 date=datetime.utcnow().isoformat() + 'Z'),
-            )
-            description = self.get_body_argument('description', None)
-            if description:
-                metadata['description'] = description
+            # Set identifier
+            metadata['materialize']['identifier'] = 'datamart.url'
+
+            # Set 'direct_url'
+            metadata['materialize']['direct_url'] = address
             dataset_id = 'datamart.url.%s' % uuid.uuid4().hex
         else:
             return await self.send_error_json(400, "No file")
@@ -1044,6 +1054,7 @@ class Statistics(BaseHandler):
         return self.send_json({
             'recent_discoveries': self.application.recent_discoveries,
             'sources_counts': self.application.sources_counts,
+            'custom_fields': self.application.custom_fields,
         })
 
 
@@ -1078,6 +1089,28 @@ class Application(GracefulApplication):
         self.nominatim = os.environ['NOMINATIM_URL']
         self.geo_data = GeoData.from_local_cache()
         self.channel = None
+
+        custom_fields = os.environ.get('CUSTOM_FIELDS', None)
+        if custom_fields:
+            custom_fields = json.loads(custom_fields)
+            if custom_fields:
+                for field, opts in custom_fields.items():
+                    opts.setdefault('label', field)
+                    opts.setdefault('required', False)
+                    opts.setdefault('type', 'text')
+                    if (
+                        not opts.keys() <= {'label', 'type', 'required'}
+                        or not isinstance(opts['label'], str)
+                        or not isinstance(opts['required'], bool)
+                        or not isinstance(opts['type'], str)
+                    ):
+                        raise ValueError("Invalid custom field %s" % field)
+
+                self.custom_fields = custom_fields
+                logger.info(
+                    "Custom fields: %s",
+                    ", ".join(self.custom_fields.keys()),
+                )
 
         self.geo_data.load_areas([0, 1, 2], bounds=True)
 
@@ -1163,7 +1196,7 @@ def make_app(debug=False):
         debug=debug,
         es=es,
         redis_client=redis_client,
-        lazo=lazo_client
+        lazo=lazo_client,
     )
 
 
