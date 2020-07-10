@@ -387,6 +387,50 @@ def decode_hash(hash, base=32):
     )
 
 
+def get_geohashes(points, base=32, precision=16, number=10):
+    """Find a specific number of geohashes covering a set of points.
+    """
+    # Tree structure, storing total count and children at each level
+    tree_root = [0, {}]
+    # Total number of nodes at each level
+    number_at_level = [0] * precision
+    for point in points:
+        hash = hash_location(point, base, precision)
+        # Add this hash to the tree
+        node = tree_root
+        for level, key in enumerate(hash):
+            node[0] += 1
+            try:
+                node = node[1][key]
+            except KeyError:
+                new_node = [0, {}]
+                node[1][key] = new_node
+                node = new_node
+                number_at_level[level] += 1
+        node[0] += 1
+
+    # Find the max level with fewer than `number` hashes
+    target_level = 0
+    while (
+        target_level < precision
+        and number_at_level[target_level] <= number
+    ):
+        target_level += 1
+
+    # Reconstruct the hashes at this level
+    hashes = []
+
+    def add_node(prefix, node, level):
+        if level == target_level:
+            hashes.append((prefix, node[0]))
+            return
+        for k, n in node[1].items():
+            add_node(prefix + k, n, level + 1)
+
+    add_node('', tree_root, 0)
+    return hashes
+
+
 def median_smallest_distance(points, tree=None):
     """Median over all points of the distance to their closest neighbor.
 

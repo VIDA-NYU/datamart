@@ -750,6 +750,57 @@ class TestGeoHash(unittest.TestCase):
             ),
         )
 
+    def test_sketch_hashes(self):
+        test_data = [
+            ((40.0, 10.0), '3011'),
+            ((20.0, 12.0), '3001'),
+            ((30.0, 50.0), '3030'),
+            ((18.0, 80.0), '3023'),
+            ((15.0, -170.0), '1001'),
+            ((14.0, -168.0), '1001'),
+            ((-75.0, -50.0), '0203'),
+            ((-76.0, -18.0), '0223'),
+            ((-74.0, -16.0), '0223'),
+            ((-75.0, -17.0), '0223'),
+        ]
+        points = [p[0] for p in test_data]
+        self.assertEqual(
+            [
+                spatial.hash_location(point, base=4, precision=4)
+                for point in points
+            ],
+            [p[1] for p in test_data],
+        )
+        self.assertEqual(
+            spatial.get_geohashes(
+                points,
+                base=4,
+                precision=4,  # Big enough it can fail, low enough I can debug
+                number=3,
+            ),
+            [('30', 4), ('10', 2), ('02', 4)],
+        )
+
+        self.assertEqual(
+            spatial.get_geohashes(
+                [(1.0, 1.0), (46.0, 91.0), (44.0, 91.0), (89.0, 89.0)],
+                base=4,
+                precision=3,
+                number=3,
+            ),
+            [('3', 4)],
+        )
+
+        self.assertEqual(
+            spatial.get_geohashes(
+                [(12.0, 12.0), (12.0, -12.0), (-12.0, -12.0), (-12.0, 12.0)],
+                base=4,
+                precision=3,
+                number=3,
+            ),
+            [('', 4)],
+        )
+
 
 class TestMedianDist(unittest.TestCase):
     def test_median_dist(self):
