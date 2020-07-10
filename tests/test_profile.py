@@ -662,6 +662,95 @@ class TestGeo(DataTestCase):
         )
 
 
+class TestGeoHash(unittest.TestCase):
+    def test_bit_encoding(self):
+        self.assertEqual(
+            spatial.bits_to_chars(
+                [0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1],
+                base_bits=5,
+            ),
+            'dr5',
+        )
+        self.assertEqual(
+            spatial.bits_to_chars(
+                [1, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+                base_bits=2,
+            ),
+            '31000',
+        )
+
+    def test_bit_decoding(self):
+        self.assertEqual(
+            list(spatial.chars_to_bits('dr5', base_bits=5)),
+            [0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1],
+        )
+        self.assertEqual(
+            list(spatial.chars_to_bits('31000', base_bits=2)),
+            [1, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+        )
+
+    def test_geohash32(self):
+        self.assertEqual(
+            spatial.hash_location((40.6962574, -73.9849621)),
+            'dr5rs2tbckjz3h8c',
+        )
+        self.assertEqual(
+            spatial.hash_location(
+                (48.8588376, 2.2768489),
+                base=32, precision=5,
+            ),
+            'u09tg',
+        )
+
+    def test_geohash32_reverse(self):
+        self.assertEqual(
+            spatial.decode_hash('dr5rs2tbckjz3h8c'),
+            (
+                40.696257399849856, 40.696257400013565,
+                -73.98496210011217, -73.98496209978475,
+            ),
+        )
+        self.assertEqual(
+            spatial.decode_hash('u09tg', base=32),
+            (
+                48.8232421875, 48.8671875,
+                2.2412109375, 2.28515625,
+            ),
+        )
+
+    def test_geohash4(self):
+        self.assertEqual(
+            spatial.hash_location(
+                (40.6962574, -73.9849621),
+                base=4,
+            ),
+            '1211302313300023',
+        )
+        self.assertEqual(
+            spatial.hash_location(
+                (48.8588376, 2.2768489),
+                base=4, precision=5,
+            ),
+            '31000',
+        )
+
+    def test_geohash4_reverse(self):
+        self.assertEqual(
+            spatial.decode_hash('1211302313300023', base=4),
+            (
+                40.69610595703125, 40.6988525390625,
+                -73.9874267578125, -73.98193359375,
+            ),
+        )
+        self.assertEqual(
+            spatial.decode_hash('31000', base=4),
+            (
+                45.0, 50.625,
+                0.0, 11.25,
+            ),
+        )
+
+
 class TestMedianDist(unittest.TestCase):
     def test_median_dist(self):
         points = []

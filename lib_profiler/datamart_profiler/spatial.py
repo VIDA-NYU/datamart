@@ -289,6 +289,104 @@ def nominatim_resolve_all(url, array, max_requests=MAX_NOMINATIM_REQUESTS):
     return locations, non_empty
 
 
+GEOHASH_CHARS = '0123456789bcdefghjkmnpqrstuvwxyz'
+assert len(GEOHASH_CHARS) == 32
+GEOHASH_CHAR_VALUES = {c: i for i, c in enumerate(GEOHASH_CHARS)}
+
+
+def bits_to_chars(bits, base_bits):
+    result = []
+    i = 0
+    while i + base_bits <= len(bits):
+        char = 0
+        for j in range(base_bits):
+            char = (char << 1) | bits[i + j]
+        result.append(GEOHASH_CHARS[char])
+        i += base_bits
+
+    return ''.join(result)
+
+
+def chars_to_bits(chars, base_bits):
+    for char in chars:
+        char = GEOHASH_CHAR_VALUES[char]
+        for i in reversed(range(base_bits)):
+            yield (char >> i) & 1
+
+
+def hash_location(point, base=32, precision=16):
+    """Hash coordinates into short strings usable for prefix search.
+
+    If base=32, this gives Geohash strings (each level splits cells into 32).
+
+    If base=4, this makes a quadtree (each level split cells into 4 quadrants).
+    """
+    latitude, longitude = point
+
+    # Compute the number of bits we need
+    base_bits = base.bit_length() - 1
+    if 2 ** base_bits != base:
+        raise ValueError("Base is not a power of 2")
+    precision_bits = base_bits * precision
+
+    # Build the bitstring
+    lat_range = -90.0, 90.0
+    long_range = -180.0, 180.0
+    bits = []
+    while len(bits) < precision_bits:
+        mid = (long_range[0] + long_range[1]) / 2.0
+        if longitude > mid:
+            bits.append(1)
+            long_range = mid, long_range[1]
+        else:
+            bits.append(0)
+            long_range = long_range[0], mid
+
+        mid = (lat_range[0] + lat_range[1]) / 2.0
+        if latitude > mid:
+            bits.append(1)
+            lat_range = mid, lat_range[1]
+        else:
+            bits.append(0)
+            lat_range = lat_range[0], mid
+
+    # Encode the bitstring
+    return bits_to_chars(bits, base_bits)
+
+
+def decode_hash(hash, base=32):
+    """Turn a hash back into a rectangle.
+
+    :returns: ``(min_lat, max_lat, min_long, max_long)``
+    """
+    base_bits = base.bit_length() - 1
+    if 2 ** base_bits != base:
+        raise ValueError("Base is not a power of 2")
+
+    lat_range = -90.0, 90.0
+    long_range = -180.0, 180.0
+    next_long = True
+    for bit in chars_to_bits(hash, base_bits):
+        if next_long:
+            mid = (long_range[0] + long_range[1]) / 2.0
+            if bit:
+                long_range = mid, long_range[1]
+            else:
+                long_range = long_range[0], mid
+        else:
+            mid = (lat_range[0] + lat_range[1]) / 2.0
+            if bit:
+                lat_range = mid, lat_range[1]
+            else:
+                lat_range = lat_range[0], mid
+        next_long = not next_long
+
+    return (
+        lat_range[0], lat_range[1],
+        long_range[0], long_range[1],
+    )
+
+
 def median_smallest_distance(points, tree=None):
     """Median over all points of the distance to their closest neighbor.
 
