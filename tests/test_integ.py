@@ -2842,7 +2842,19 @@ geo_metadata = {
         {
             "lat": "lat",
             "lon": "long",
-            "ranges": check_geo_ranges(-74.006, 40.6905, -73.983, 40.7352)
+            "ranges": check_geo_ranges(-74.006, 40.6905, -73.983, 40.7352),
+            "geohashes4": [
+                {'hash': '121130231330111', 'number': 10},
+                {'hash': '121130231330110', 'number': 32},
+                {'hash': '121130231330112', 'number': 1},
+                {'hash': '121130231330113', 'number': 1},
+                {'hash': '121130231330101', 'number': 1},
+                {'hash': '121130231330103', 'number': 1},
+                {'hash': '121130231330002', 'number': 18},
+                {'hash': '121130231312332', 'number': 3},
+                {'hash': '121130231312333', 'number': 1},
+                {'hash': '121130231321113', 'number': 32},
+            ],
         }
     ],
     "materialize": {
@@ -2955,7 +2967,19 @@ geo_wkt_metadata = {
     "spatial_coverage": [
         {
             "point": "coords",
-            "ranges": check_geo_ranges(-74.006, 40.6905, -73.983, 40.7352)
+            "ranges": check_geo_ranges(-74.006, 40.6905, -73.983, 40.7352),
+            "geohashes4": [
+                {'hash': '121130231330111', 'number': 10},
+                {'hash': '121130231330110', 'number': 32},
+                {'hash': '121130231330112', 'number': 1},
+                {'hash': '121130231330113', 'number': 1},
+                {'hash': '121130231330101', 'number': 1},
+                {'hash': '121130231330103', 'number': 1},
+                {'hash': '121130231330002', 'number': 18},
+                {'hash': '121130231312332', 'number': 3},
+                {'hash': '121130231312333', 'number': 1},
+                {'hash': '121130231321113', 'number': 32},
+            ],
         }
     ],
     "materialize": {

@@ -150,7 +150,10 @@ class TestLatlongSelection(DataTestCase):
         )
         # Check pairs
         self.assertJson(
-            [{k: v for k, v in c.items() if k != 'ranges'} for c in metadata['spatial_coverage']],
+            [
+                {k: v for k, v in c.items() if k in ('lat', 'lon')}
+                for c in metadata['spatial_coverage']
+            ],
             [
                 {'lat': 'to lat', 'lon': 'to long'},
                 {'lat': 'from latitude', 'lon': 'from longitude'},
@@ -532,6 +535,11 @@ class TestNominatim(DataTestCase):
                     {
                         'address': 'loc',
                         'ranges': check_geo_ranges(-74.00, 40.69, -73.98, 40.73),
+                        'geohashes4': [
+                            {'hash': '1211302313301103', 'number': 1},
+                            {'hash': '1211302313301102', 'number': 1},
+                            {'hash': '1211302313300022', 'number': 1},
+                        ],
                     },
                 ],
             },

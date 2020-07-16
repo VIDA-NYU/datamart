@@ -103,6 +103,14 @@ datamart:
             type: text
           admin:
             type: text
+          geohashes4:
+            properties:
+              hash:
+                type: keyword
+                index: false
+              number:
+                type: integer
+                index: false
           # we want to query individual spatial ranges
           ranges:
             type: nested
@@ -268,6 +276,14 @@ datamart_spatial_coverage:
             type: double
           min_lat:
             type: double
+      geohashes4:
+        properties:
+          hash:
+            type: keyword
+            index: false
+          number:
+            type: integer
+            index: false
 pending:
   settings:
     <<: *analyzer

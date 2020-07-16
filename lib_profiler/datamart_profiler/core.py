@@ -14,7 +14,7 @@ import warnings
 from .numerical import mean_stddev, get_numerical_ranges
 from .profile_types import identify_types
 from .spatial import nominatim_resolve_all, pair_latlong_columns, \
-    get_spatial_ranges, parse_wkt_column
+    get_spatial_ranges, parse_wkt_column, get_geohashes
 from .temporal import get_temporal_resolution
 from . import types
 
@@ -30,6 +30,8 @@ SAMPLE_ROWS = 20
 MAX_UNCLEAN_ADDRESSES = 0.20  # 20%
 
 MAX_WRONG_LEVEL_ADMIN = 0.10  # 10%
+
+MAX_GEOHASHES = 10
 
 
 BUCKETS = [0.5, 1.0, 5.0, 10.0, 20.0, 30.0, 60.0, 120.0, 300.0, 600.0]
@@ -63,6 +65,21 @@ def truncate_string(s, limit=140):
             return s[:limit - 3] + "..."
         else:
             return s[:space] + "..."
+
+
+def get_geohashes_json(points):
+    hashes = get_geohashes(
+        points,
+        base=4,
+        number=MAX_GEOHASHES,
+    )
+    return [
+        {
+            'hash': h,
+            'number': n,
+        }
+        for h, n in hashes
+    ]
 
 
 @PROM_PROFILE.time()
@@ -482,7 +499,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
                 if col['name'] in missed_long:
                     col['semantic_types'].remove(types.LONGITUDE)
 
-            # Compute ranges from lat/long pairs
+            # Compute sketch from lat/long pairs
             for (name_lat, values_lat), (name_long, values_long) in pairs:
                 values = []
                 for lat, long in zip(values_lat, values_long):
@@ -492,16 +509,21 @@ def process_dataset(data, dataset_id=None, metadata=None,
 
                 if len(values) > 1:
                     logger.info(
-                        "Computing spatial ranges lat=%r long=%r (%d rows)",
+                        "Computing spatial sketch lat=%r long=%r (%d rows)",
                         name_lat, name_long, len(values),
                     )
+                    # Ranges
                     spatial_ranges = get_spatial_ranges(values)
-                    if spatial_ranges:
-                        spatial_coverage.append({"lat": name_lat,
-                                                 "lon": name_long,
-                                                 "ranges": spatial_ranges})
+                    # Geohashes
+                    hashes = get_geohashes_json(values)
+                    spatial_coverage.append({
+                        "lat": name_lat,
+                        "lon": name_long,
+                        "ranges": spatial_ranges,
+                        "geohashes4": hashes,
+                    })
 
-            # Compute ranges from WKT points
+            # Compute sketches from WKT points
             for i, col in enumerate(columns):
                 if col['structural_type'] != types.GEO_POINT:
                     continue
@@ -511,23 +533,33 @@ def process_dataset(data, dataset_id=None, metadata=None,
                     "Computing spatial ranges point=%r (%d rows)",
                     name, len(values),
                 )
+                # Ranges
                 spatial_ranges = get_spatial_ranges(values)
-                if spatial_ranges:
-                    spatial_coverage.append({"point": name,
-                                             "ranges": spatial_ranges})
+                # Geohashes
+                hashes = get_geohashes_json(values)
+                spatial_coverage.append({
+                    "point": name,
+                    "ranges": spatial_ranges,
+                    "geohashes4": hashes,
+                })
 
-            # Compute ranges from addresses
+            # Compute sketches from addresses
             for name, values in resolved_addresses.items():
                 logger.info(
                     "Computing spatial ranges address=%r (%d rows)",
                     name, len(values),
                 )
+                # Ranges
                 spatial_ranges = get_spatial_ranges(values)
-                if spatial_ranges:
-                    spatial_coverage.append({"address": name,
-                                             "ranges": spatial_ranges})
+                # Geohashes
+                hashes = get_geohashes_json(values)
+                spatial_coverage.append({
+                    "address": name,
+                    "ranges": spatial_ranges,
+                    "geohashes4": hashes,
+                })
 
-            # Compute ranges from administrative areas
+            # Compute sketches from administrative areas
             for name, areas in resolved_admin_areas.items():
                 merged = None
                 for area in areas:

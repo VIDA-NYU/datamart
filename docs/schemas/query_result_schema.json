@@ -99,6 +99,16 @@
               "admin": {"type": "string"},
               "ranges": {
                 "$ref": "#/definitions/spatial_ranges"
+              },
+              "geohashes4": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "hash": {"type": "string"},
+                    "number": {"type": "integer"}
+                  }
+                }
               }
             },
             "required": ["ranges"],
