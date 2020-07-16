@@ -221,6 +221,7 @@ datamart_spatial_coverage:
         index: false
       name:
         type: text
+      # Keep in sync, search code for 279a32
       lat:
         type: text
         index: false
@@ -243,6 +244,12 @@ datamart_spatial_coverage:
         type: text
         index: false
       point_index:
+        type: integer
+        index: false
+      admin:
+        type: text
+        index: false
+      admin_index:
         type: integer
         index: false
       ranges:

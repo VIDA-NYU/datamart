@@ -53,6 +53,8 @@ Make sure your node is set up for running Elasticsearch. You will probably have 
 
 The `API_URL` is the URL at which the apiserver containers will be visible to clients. In a production deployment, this is probably a public-facing HTTPS URL. It can be the same URL that the "coordinator" component will be served at if using a reverse proxy (see [nginx.conf](nginx.conf)).
 
+To run scripts locally, you can load the environment variables into your shell by running: `. scripts/load_env.sh` (that's *dot space scripts...*)
+
 Build the containers
 --------------------
 

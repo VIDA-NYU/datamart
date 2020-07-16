@@ -2163,11 +2163,13 @@ class TestSession(DatamartTest):
                         'url': (os.environ['API_URL']
                                 + '/download/datamart.test.basic'
                                 + '?format=csv'),
+                        'type': 'download',
                     },
                     {
                         'url': (os.environ['API_URL']
                                 + '/download/datamart.test.agg'
                                 + '?format=csv'),
+                        'type': 'download',
                     },
                 ],
             },
@@ -2207,11 +2209,13 @@ class TestSession(DatamartTest):
                             + '/download/datamart.test.basic'
                             + '?' + format_query
                         ),
+                        'type': 'download',
                     },
                     {
                         'url': (os.environ['API_URL']
                                 + '/download/datamart.test.agg'
                                 + '?' + format_query),
+                        'type': 'download',
                     },
                 ],
             },
@@ -2264,6 +2268,7 @@ class TestSession(DatamartTest):
                         'url': lambda u: u.startswith(
                             os.environ['API_URL'] + '/augment/'
                         ),
+                        'type': 'join',
                     },
                 ],
             },
@@ -2325,6 +2330,7 @@ class TestSession(DatamartTest):
                         'url': lambda u: u.startswith(
                             os.environ['API_URL'] + '/augment/'
                         ),
+                        'type': 'join',
                     },
                 ],
             },

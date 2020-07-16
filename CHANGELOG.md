@@ -28,6 +28,13 @@ Enhancements:
 * Accept format parameters for augmentations (don't only return D3M format)
 * Automatically handle SPSS files
 * Convert search input the same as discovered datasets (so searching is possible from a TSV, Excel, or SPSS file)
+* Serve files with the correct extension
+* Filter results by temporal granularity
+* Cache data sent to `/profile`, to allow augmentations from it without reupload
+* Update URL in frontend to reflect current query
+* Add a "TA3 API" allowing systems to use our search frontend as part of their workflow, and collect results directly from Datamart afterwards
+* Add "custom fields" which can be added to the upload form via configuration
+* Allow the user to override profiled information on the upload form
 
 0.6 (2020-04-29)
 ================

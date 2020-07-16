@@ -100,6 +100,17 @@ PROM_AUGMENT = PromMeasureRequest(
         buckets=BUCKETS,
     ),
 )
+PROM_AUGMENT_RESULT = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_augment_result_count',
+        "Augment result requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_augment_result_seconds',
+        "Augment result request time",
+        buckets=BUCKETS,
+    ),
+)
 PROM_UPLOAD = PromMeasureRequest(
     count=prometheus_client.Counter(
         'req_upload_count',
@@ -108,6 +119,50 @@ PROM_UPLOAD = PromMeasureRequest(
     time=prometheus_client.Histogram(
         'req_upload_seconds',
         "Upload request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_SESSION_NEW = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_session_new_count',
+        "New session requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_session_new_seconds',
+        "New session request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_SESSION_GET = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_session_get_count',
+        "Get session requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_session_get_seconds',
+        "Get session request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_STATISTICS = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_statistics_count',
+        "Statistics requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_statistics_seconds',
+        "Statistics request time",
+        buckets=BUCKETS,
+    ),
+)
+PROM_VERSION = PromMeasureRequest(
+    count=prometheus_client.Counter(
+        'req_version_count',
+        "Version requests",
+    ),
+    time=prometheus_client.Histogram(
+        'req_version_seconds',
+        "Version request time",
         buckets=BUCKETS,
     ),
 )
@@ -124,9 +179,16 @@ class BaseHandler(RequestHandler):
     def get_json(self):
         type_ = self.request.headers.get('Content-Type', '')
         if not type_.startswith('application/json'):
-            self.send_error_json(404, "Expected JSON")
+            self.send_error_json(400, "Expected JSON")
             raise HTTPError(400)
-        return json.loads(self.request.body.decode('utf-8'))
+        try:
+            return json.loads(self.request.body.decode('utf-8'))
+        except UnicodeDecodeError:
+            self.send_error_json(400, "Invalid character encoding")
+            raise HTTPError(400)
+        except json.JSONDecodeError:
+            self.send_error_json(400, "Invalid JSON")
+            raise HTTPError(400)
 
     def send_json(self, obj):
         if isinstance(obj, list):
@@ -276,10 +338,7 @@ class Profile(BaseHandler, GracefulHandler, ProfilePostedData):
 
         logger.info("Got profile")
 
-        try:
-            data_profile, data_hash = self.handle_data_parameter(data)
-        except ClientError as e:
-            return self.send_error_json(400, str(e))
+        data_profile, data_hash = self.handle_data_parameter(data)
 
         return self.send_json(dict(
             data_profile,
@@ -371,10 +430,7 @@ class Search(BaseHandler, GracefulHandler, ProfilePostedData):
 
         # parameter: data
         if data is not None:
-            try:
-                data_profile, _ = self.handle_data_parameter(data)
-            except ClientError as e:
-                return self.send_error_json(400, str(e))
+            data_profile, _ = self.handle_data_parameter(data)
 
         # parameter: data_id
         if data_id:
@@ -483,23 +539,6 @@ class BaseDownload(BaseHandler):
             logger.info("Sending redirect to direct_url")
             return self.redirect(materialize['direct_url'])
 
-        if session_id:
-            self.application.redis.rpush(
-                'session:' + session_id,
-                ('download:' + dataset_id
-                 + '?' + self.serialize_format(format, format_options)),
-            )
-            ret = self.send_json({'success': "attached to session"})
-
-            # Kick off materialization now
-            with get_dataset(
-                metadata, dataset_id,
-                format=format, format_options=format_options,
-            ):
-                pass
-
-            return ret
-
         with contextlib.ExitStack() as stack:
             try:
                 dataset_path = stack.enter_context(
@@ -512,11 +551,29 @@ class BaseDownload(BaseHandler):
                 await self.send_error_json(500, "Materializer reports failure")
                 raise
 
-            logger.info("Sending file...")
-            return await self.send_file(
-                dataset_path,
-                dataset_id + (format_ext or ''),
-            )
+            if session_id:
+                logger.info("Attaching to session")
+                self.application.redis.rpush(
+                    'session:' + session_id,
+                    json.dumps(
+                        {
+                            'type': 'download',
+                            'url': (
+                                '/download/' + dataset_id + '?'
+                                + self.serialize_format(format, format_options)
+                            ),
+                        },
+                        # Compact
+                        sort_keys=True, indent=None, separators=(',', ':'),
+                    ),
+                )
+                return await self.send_json({'success': "attached to session"})
+            else:
+                logger.info("Sending file...")
+                return await self.send_file(
+                    dataset_path,
+                    dataset_id + (format_ext or ''),
+                )
 
 
 class DownloadId(BaseDownload, GracefulHandler):
@@ -592,10 +649,7 @@ class Download(BaseDownload, GracefulHandler, ProfilePostedData):
             format, format_options, format_ext = self.read_format()
 
             # data
-            try:
-                data_profile, _ = self.handle_data_parameter(data)
-            except ClientError as e:
-                return await self.send_error_json(400, str(e))
+            data_profile, _ = self.handle_data_parameter(data)
 
             # first, look for possible augmentation
             search_results = get_augmentation_search_results(
@@ -758,10 +812,7 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
                         else:
                             with open(data, 'rb') as fp:
                                 data = fp.read()
-            try:
-                data_profile, data_hash = self.handle_data_parameter(data)
-            except ClientError as e:
-                return await self.send_error_json(400, str(e))
+            data_profile, data_hash = self.handle_data_parameter(data)
         else:
             return await self.send_error_json(400, "Missing 'data'")
 
@@ -804,14 +855,6 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
             format_options=format_options,
         )
 
-        ret = None
-        if session_id:
-            self.application.redis.rpush(
-                'session:' + session_id,
-                'aug:' + key,
-            )
-            ret = self.send_json({'success': "attached to session"})
-
         def create_aug(cache_temp):
             with contextlib.ExitStack() as stack:
                 # Get augmentation data
@@ -849,8 +892,20 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
         try:
             with cache_get_or_set('/cache/aug', key, create_aug) as path:
                 if session_id:
-                    # We already replied
-                    return await ret
+                    self.application.redis.rpush(
+                        'session:' + session_id,
+                        json.dumps(
+                            {
+                                'type': task['augmentation']['type'],
+                                'url': '/augment/' + key,
+                            },
+                            # Compact
+                            sort_keys=True, indent=None, separators=(',', ':'),
+                        )
+                    )
+                    return await self.send_json({
+                        'success': "attached to session",
+                    })
                 else:
                     # send the file
                     return await self.send_file(
@@ -862,6 +917,7 @@ class Augment(BaseHandler, GracefulHandler, ProfilePostedData):
 
 
 class AugmentResult(BaseHandler):
+    @PROM_AUGMENT_RESULT.sync()
     async def get(self, key):
         with cache_get('/cache/aug', key) as path:
             if path:
@@ -965,6 +1021,7 @@ class Upload(BaseHandler):
 
 
 class SessionNew(BaseHandler):
+    @PROM_SESSION_NEW.sync()
     def post(self):
         # Read input
         session = self.get_json()
@@ -1022,6 +1079,7 @@ class SessionNew(BaseHandler):
 
 
 class SessionGet(BaseHandler):
+    @PROM_SESSION_GET.sync()
     def get(self, session_id):
         # Get session from Redis
         datasets = self.application.redis.lrange(
@@ -1032,24 +1090,17 @@ class SessionGet(BaseHandler):
         api_url = self.application.api_url
         results = []
         for record in datasets:
-            record = record.decode('utf-8')
-            if record.startswith('download:'):
-                record = record[9:]
-                results.append({
-                    'url': api_url + '/download/' + record,
-                })
-            elif record.startswith('aug:'):
-                record = record[4:]
-                results.append({
-                    'url': api_url + '/augment/' + record,
-                })
-            else:
-                logger.error("Error: invalid entry in session: %r", record)
+            record = json.loads(record.decode('utf-8'))
+            results.append({
+                'url': api_url + record['url'],
+                'type': record['type'],
+            })
 
         return self.send_json({'results': results})
 
 
 class Statistics(BaseHandler):
+    @PROM_STATISTICS.sync()
     def get(self):
         return self.send_json({
             'recent_discoveries': self.application.recent_discoveries,
@@ -1059,6 +1110,7 @@ class Statistics(BaseHandler):
 
 
 class Version(BaseHandler):
+    @PROM_VERSION.sync()
     def get(self):
         return self.send_json({
             'version': os.environ['DATAMART_VERSION'].lstrip('v'),
@@ -1090,6 +1142,7 @@ class Application(GracefulApplication):
         self.geo_data = GeoData.from_local_cache()
         self.channel = None
 
+        self.custom_fields = {}
         custom_fields = os.environ.get('CUSTOM_FIELDS', None)
         if custom_fields:
             custom_fields = json.loads(custom_fields)

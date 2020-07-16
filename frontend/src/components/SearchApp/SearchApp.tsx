@@ -179,6 +179,11 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
   componentDidMount() {
     this.fetchSources();
     this.updateSearchStateFromUrlParams(this.props.location);
+    document.body.classList.add('searchapp');
+  }
+
+  componentWillUnmount() {
+    document.body.classList.remove('searchapp');
   }
 
   async fetchSources() {

@@ -44,6 +44,6 @@
   cursor: pointer;
   padding: 0px;
 }
-html, body {
+body.searchapp {
   overflow: hidden;
 }

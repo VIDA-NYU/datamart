@@ -207,7 +207,7 @@ class Coordinator(object):
                 'aggs': {
                     'versions': {
                         'terms': {
-                            'field': 'verison',
+                            'field': 'version',
                         },
                     },
                 },

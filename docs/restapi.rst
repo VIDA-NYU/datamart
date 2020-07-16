@@ -146,4 +146,4 @@ Step 3: Obtain the selected data from Datamart: ``GET /session/<id>``
 
 Issue a request to ``GET /session/<session_id>``, where ``<session_id>`` is the short string you obtained in step 1.
 
-The result is an array of JSON objects, under a top-level key ``results``. Each object has a single key, ``url``, at which you can find the data that the user selected (in the format you selected at step 1).
+The result is an array of JSON objects, under a top-level key ``results``. Each object has a ``url`` key, at which you can find the data that the user selected (in the format you selected at step 1), and a ``type`` key, whose value is either ``"download"`` (the result is a dataset from Datamart) or ``"join"``/``"union"`` (the result is the input data augmented with the dataset from Datamart).
