@@ -3,7 +3,7 @@ services:
   # Keep images in sync with scripts/minikube-load-images.sh
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
     restart: on-failure
     environment:
       - discovery.type=single-node
