@@ -34,7 +34,7 @@ function Chip(props: ChipProps) {
           ''
         )}
       </span>
-      {props.icon && (
+      {props.onClose && (
         <div className="chip-btn-close" onClick={props.onClose}>
           <Icon.Trash2 className="feather" />
         </div>

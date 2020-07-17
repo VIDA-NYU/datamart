@@ -100,7 +100,6 @@ class SearchHit extends React.PureComponent<SearchHitProps, SearchHitState> {
       kind: 'searchResult',
       datasetId: this.props.hit.id,
       name: this.props.hit.metadata.name,
-      fileSize: this.props.hit.metadata.size,
     };
     this.props.onSearchRelated(relatedFile);
   }

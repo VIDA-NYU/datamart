@@ -5,7 +5,7 @@
   height: 32px;
   display: inline-flex;
   outline: 0;
-  padding: 0;
+  padding: 0 0.5rem;
   font-size: 0.8125rem;
   box-sizing: border-box;
   transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,
@@ -33,12 +33,10 @@
 
 .chip-btn-close {
   margin-left: .25rem!important;
-  margin-right: .5rem!important;
   margin-bottom: 0.1rem!important;
 }
 
 .chip-icon {
-  margin-left: .5rem!important;
   margin-right: .3rem!important;
   margin-bottom: 0.1rem!important;
 }

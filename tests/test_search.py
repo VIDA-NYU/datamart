@@ -145,60 +145,58 @@ class TestSearch(unittest.TestCase):
                         ],
                     },
                 },
-                [
-                    {
-                        'nested': {
-                            'path': 'columns',
-                            'query': {
-                                'bool': {
-                                    'must': [
-                                        {
-                                            'term': {
-                                                'columns.semantic_types': 'http://schema.org/DateTime',
-                                            },
+                {
+                    'nested': {
+                        'path': 'columns',
+                        'query': {
+                            'bool': {
+                                'must': [
+                                    {
+                                        'term': {
+                                            'columns.semantic_types': 'http://schema.org/DateTime',
                                         },
-                                        {
-                                            'nested': {
-                                                'path': 'columns.coverage',
-                                                'query': {
-                                                    'range': {
-                                                        'columns.coverage.range': {
-                                                            'gte': 1546300800.0,
-                                                            'lte': 1577750400.0,
-                                                            'relation': 'intersects',
-                                                        },
+                                    },
+                                    {
+                                        'nested': {
+                                            'path': 'columns.coverage',
+                                            'query': {
+                                                'range': {
+                                                    'columns.coverage.range': {
+                                                        'gte': 1546300800.0,
+                                                        'lte': 1577750400.0,
+                                                        'relation': 'intersects',
                                                     },
                                                 },
                                             },
                                         },
-                                    ],
-                                },
+                                    },
+                                ],
                             },
                         },
                     },
-                    {
-                        'nested': {
-                            'path': 'spatial_coverage.ranges',
-                            'query': {
-                                'bool': {
-                                    'filter': {
-                                        'geo_shape': {
-                                            'spatial_coverage.ranges.range': {
-                                                'shape': {
-                                                    'type': 'envelope',
-                                                    'coordinates': [
-                                                        [-75.8, 50.6],
-                                                        [-73.2, 45.4],
-                                                    ],
-                                                },
-                                                'relation': 'intersects',
+                },
+                {
+                    'nested': {
+                        'path': 'spatial_coverage.ranges',
+                        'query': {
+                            'bool': {
+                                'filter': {
+                                    'geo_shape': {
+                                        'spatial_coverage.ranges.range': {
+                                            'shape': {
+                                                'type': 'envelope',
+                                                'coordinates': [
+                                                    [-75.8, 50.6],
+                                                    [-73.2, 45.4],
+                                                ],
                                             },
+                                            'relation': 'intersects',
                                         },
                                     },
                                 },
                             },
                         },
                     },
-                ],
+                },
             ],
         )

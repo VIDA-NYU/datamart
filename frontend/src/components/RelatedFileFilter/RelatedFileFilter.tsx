@@ -97,7 +97,10 @@ class RelatedFileFilter extends React.PureComponent<
         <div>
           <CardShadow height={'auto'}>
             <span className="font-weight-bold">Selected dataset:</span>{' '}
-            {relatedFile.name} ({formatSize(relatedFile.fileSize)})
+            {relatedFile.name}
+            {relatedFile.fileSize !== undefined
+              ? ' (' + formatSize(relatedFile.fileSize) + ')'
+              : undefined}
             {columns ? ` (${columns})` : undefined}
           </CardShadow>
         </div>

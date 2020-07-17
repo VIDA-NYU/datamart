@@ -11,10 +11,12 @@ export enum FilterType {
 
 interface AdvancedSearchBarProps {
   onAddFilter: (type: FilterType) => void;
+  relatedFileEnabled: boolean;
 }
 
 class AdvancedSearchBar extends React.PureComponent<AdvancedSearchBarProps> {
   render() {
+    const { relatedFileEnabled } = this.props;
     return (
       <div className="AdvancedSearchBar">
         <span className="d-inline text-oswald AdvancedSearchBar-title">
@@ -36,14 +38,18 @@ class AdvancedSearchBar extends React.PureComponent<AdvancedSearchBarProps> {
           <span>Any Location</span>
           <Icon.ChevronDown className="feather" />
         </div>
-        <div
-          className="d-inline btn AdvancedSearchBar-item"
-          onClick={() => this.props.onAddFilter(FilterType.RELATED_FILE)}
-        >
-          <Icon.File className="feather" />
-          <span>Related File</span>
-          <Icon.ChevronDown className="feather" />
-        </div>
+        {relatedFileEnabled ? (
+          <div
+            className="d-inline btn AdvancedSearchBar-item"
+            onClick={() => this.props.onAddFilter(FilterType.RELATED_FILE)}
+          >
+            <Icon.File className="feather" />
+            <span>Related File</span>
+            <Icon.ChevronDown className="feather" />
+          </div>
+        ) : (
+          undefined
+        )}
         <div
           className="d-inline btn AdvancedSearchBar-item"
           onClick={() => this.props.onAddFilter(FilterType.SOURCE)}

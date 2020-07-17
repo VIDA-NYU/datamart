@@ -1056,7 +1056,7 @@ def parse_query(query_json):
     #   for 'datamart_columns' and 'datamart_spatial_coverage' indices,
     #   since we do not have information about a dataset in these indices
     if variables_query:
-        query_args_main.append(variables_query)
+        query_args_main.extend(variables_query)
 
     return query_args_main, query_sup_functions, query_sup_filters, list(set(tabular_variables))
 

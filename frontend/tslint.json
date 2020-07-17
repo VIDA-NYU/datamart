@@ -11,6 +11,10 @@
       "check-format",
       "ban-keywords",
       "allow-pascal-case"
+    ],
+    "prefer-const": [
+      true,
+      {"destructuring": "all"}
     ]
   }
 }
