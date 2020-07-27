@@ -18,7 +18,9 @@ import {
 import { fromLonLat } from 'ol/proj';
 import { VectorSourceEvent } from 'ol/source/Vector';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
+import { NOMINATIM_URL } from '../../config';
 import { GeoSpatialVariable } from '../../api/types';
+import { searchNominatim } from '../../api/rest';
 import {
   transformCoordinates,
   centralizeMapToFeature,
@@ -192,27 +194,16 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
   onSearch(e: React.FormEvent) {
     e.preventDefault();
     if (this.searchRef.current && this.searchRef.current.value) {
-      fetch(
-        'http://35.225.89.238/search?q=' +
-          encodeURIComponent(this.searchRef.current.value) +
-          '&format=jsonv2'
-      )
-        .then(response => {
-          if (response.status !== 200) {
-            throw new Error('Error ' + response.status + ' from Nominatim');
-          } else {
-            return response.json().then(obj => {
-              if (obj.length) {
-                // Select it
-                const [minLat, maxLat, minLon, maxLon] = obj[0].boundingbox;
-                this.props.onSelectCoordinates({
-                  type: 'geospatial_variable',
-                  latitude1: maxLat.toString(),
-                  longitude1: minLon.toString(),
-                  latitude2: minLat.toString(),
-                  longitude2: maxLon.toString(),
-                });
-              }
+      searchNominatim(this.searchRef.current.value)
+        .then(results => {
+          if (results.length > 0) {
+            const [minLat, maxLat, minLon, maxLon] = results[0].boundingbox;
+            this.props.onSelectCoordinates({
+              type: 'geospatial_variable',
+              latitude1: maxLat.toString(),
+              longitude1: minLon.toString(),
+              latitude2: minLat.toString(),
+              longitude2: maxLon.toString(),
             });
           }
         })
@@ -236,14 +227,18 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
       <div>
         <div className="row">
           <div className="col-md-12" style={{ fontSize: '.9rem' }}>
-            <form onSubmit={this.onSearch} className="form-inline">
-              <input name="location" ref={this.searchRef} className="mb-2" />
-              <input
-                type="submit"
-                className="btn btn-secondary ml-sm-2 mb-2"
-                value="Search"
-              />
-            </form>
+            {NOMINATIM_URL ? (
+              <form onSubmit={this.onSearch} className="form-inline">
+                <input name="location" ref={this.searchRef} className="mb-2" />
+                <input
+                  type="submit"
+                  className="btn btn-secondary ml-sm-2 mb-2"
+                  value="Search"
+                />
+              </form>
+            ) : (
+              undefined
+            )}
             <span className="d-inline">
               Left-click to start selection. Right-click to clear selection.
             </span>

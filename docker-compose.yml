@@ -71,6 +71,7 @@ services:
       dockerfile: frontend/Dockerfile
     environment:
       - API_URL=${API_URL}
+      - NOMINATIM_URL=${NOMINATIM_URL}
     cpu_shares: 10
     ports:
       - 8001:80

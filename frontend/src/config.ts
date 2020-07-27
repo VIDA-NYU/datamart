@@ -34,6 +34,7 @@ function loadVariableFromHTML(name: string): string {
 
 let baseUrl = `//${window.location.host}`;
 let apiUrl = baseUrl;
+let nominatimUrl = undefined;
 
 const isDev = process.env.NODE_ENV === 'development';
 if (isDev && process.env.REACT_APP_BASE_URL) {
@@ -42,11 +43,16 @@ if (isDev && process.env.REACT_APP_BASE_URL) {
 if (isDev && process.env.REACT_APP_API_URL) {
   apiUrl = process.env.REACT_APP_API_URL;
 }
+if (isDev && process.env.REACT_APP_NOMINATIM_URL) {
+  nominatimUrl = process.env.REACT_APP_NOMINATIM_URL;
+}
 
 const BASE_URL: string = loadVariableFromHTML('base_url') || baseUrl;
 const API_URL = loadVariableFromHTML('api_url') || apiUrl;
+const NOMINATIM_URL = loadVariableFromHTML('nominatim_url') || nominatimUrl;
 
 console.log('BASE_URL', BASE_URL);
 console.log('API_URL', API_URL);
+console.log('NOMINATIM_URL', NOMINATIM_URL);
 
-export { BASE_URL, API_URL };
+export { BASE_URL, API_URL, NOMINATIM_URL };

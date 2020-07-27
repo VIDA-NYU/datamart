@@ -8,7 +8,7 @@ import {
   RelatedFile,
   Session,
 } from './types';
-import { API_URL } from '../config';
+import { API_URL, NOMINATIM_URL } from '../config';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -258,4 +258,17 @@ export function customFields(): Promise<CustomFields> {
     statusPromise = status();
   }
   return statusPromise.then(response => response.custom_fields || {});
+}
+
+const nominatimApi = axios.create({
+  baseURL: NOMINATIM_URL,
+});
+
+export async function searchNominatim(
+  query: string
+): Promise<Array<{ boundingbox: number[] }>> {
+  const response = await nominatimApi.get(
+    '/search?q=' + encodeURIComponent(query) + '&format=jsonv2'
+  );
+  return response.data;
 }
