@@ -36,12 +36,15 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
   mapId = generateRandomId();
   map?: Map;
   source: VectorSource;
+  searchRef: React.RefObject<HTMLInputElement>;
 
   constructor(props: GeoSpatialFilterProps) {
     super(props);
     this.source = new VectorSource({ wrapX: true });
     this.source.on('addfeature', evt => this.onSelectCoordinates(evt));
     this.componentDidUpdate();
+    this.onSearch = this.onSearch.bind(this);
+    this.searchRef = React.createRef();
   }
 
   featureMatchesProps(feature: Feature): boolean {
@@ -186,6 +189,37 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
     map.addInteraction(draw);
   }
 
+  onSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (this.searchRef.current && this.searchRef.current.value) {
+      fetch(
+        'http://35.225.89.238/search?q=' +
+          encodeURIComponent(this.searchRef.current.value) +
+          '&format=jsonv2'
+      )
+        .then(response => {
+          if (response.status !== 200) {
+            throw new Error('Error ' + response.status + ' from Nominatim');
+          } else {
+            return response.json().then(obj => {
+              if (obj.length) {
+                // Select it
+                const [minLat, maxLat, minLon, maxLon] = obj[0].boundingbox;
+                this.props.onSelectCoordinates({
+                  type: 'geospatial_variable',
+                  latitude1: maxLat.toString(),
+                  longitude1: minLon.toString(),
+                  latitude2: minLat.toString(),
+                  longitude2: maxLon.toString(),
+                });
+              }
+            });
+          }
+        })
+        .catch(e => alert('Error from search server'));
+    }
+  }
+
   render() {
     const style = {
       width: '100%',
@@ -202,6 +236,14 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
       <div>
         <div className="row">
           <div className="col-md-12" style={{ fontSize: '.9rem' }}>
+            <form onSubmit={this.onSearch} className="form-inline">
+              <input name="location" ref={this.searchRef} className="mb-2" />
+              <input
+                type="submit"
+                className="btn btn-secondary ml-sm-2 mb-2"
+                value="Search"
+              />
+            </form>
             <span className="d-inline">
               Left-click to start selection. Right-click to clear selection.
             </span>
