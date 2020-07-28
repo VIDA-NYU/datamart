@@ -107,6 +107,7 @@ class GeoSpatialCoverageMap extends React.PureComponent<
               width: 2,
             }),
           }),
+          data: { hash, number: hashNumber },
         });
       }
     } else if (coverage.ranges?.length) {
@@ -127,6 +128,7 @@ class GeoSpatialCoverageMap extends React.PureComponent<
             [topLeft[0], topLeft[1]],
           ],
           style: undefined,
+          data: undefined,
         });
       }
     }
@@ -163,12 +165,15 @@ class GeoSpatialCoverageMap extends React.PureComponent<
 
     // drawing bounding boxes
     for (let j = 0; j < polygons.length; j++) {
-      const { geom, style } = polygons[j];
+      const { geom, style, data } = polygons[j];
       const polygon = new Polygon([geom]);
       polygon.transform('EPSG:4326', 'EPSG:3857');
       const feature = new Feature(polygon);
       if (style) {
         feature.setStyle(style);
+      }
+      if (data) {
+        feature.set('datamart_data', data);
       }
       source.addFeature(feature);
     }
@@ -250,17 +255,29 @@ class GeoSpatialCoverageMap extends React.PureComponent<
 
         const content = this.popupContentRef.current;
         if (content) {
-          content.innerHTML =
-            '<span>Top Left: </span><code>' +
-            topLeft +
-            '</code> </br>' +
-            '<span>Bottom Right: </span><code>' +
-            bottomRight +
-            '</code>';
+          const data = feature.get('datamart_data');
+          if (data !== undefined) {
+            content.innerHTML = `${data.number} points`;
+          } else {
+            content.innerHTML =
+              '<span>Top Left: </span><code>' +
+              topLeft +
+              '</code> </br>' +
+              '<span>Bottom Right: </span><code>' +
+              bottomRight +
+              '</code>';
+          }
           map
             .getOverlayById('overlay')
             .setPosition(
-              transform([topLeftLon, topLeftLat], 'EPSG:4326', 'EPSG:3857')
+              transform(
+                [
+                  (topLeftLon + bottomRightLon) / 2,
+                  (topLeftLat + bottomRightLat) / 2,
+                ],
+                'EPSG:4326',
+                'EPSG:3857'
+              )
             );
         }
       } else {
