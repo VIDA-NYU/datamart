@@ -27,6 +27,7 @@ import {
   MyMapBrowserEvent,
   wrapLongitude,
 } from '../spatial-utils';
+import { SearchBar } from '../SearchBar/SearchBar';
 import 'ol/ol.css';
 
 interface GeoSpatialFilterProps {
@@ -34,19 +35,27 @@ interface GeoSpatialFilterProps {
   onSelectCoordinates: (coordinates: GeoSpatialVariable) => void;
 }
 
-class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
+interface GeoSpatialFilterState {
+  search: string;
+}
+
+class GeoSpatialFilter extends React.PureComponent<
+  GeoSpatialFilterProps,
+  GeoSpatialFilterState
+> {
   mapId = generateRandomId();
   map?: Map;
   source: VectorSource;
-  searchRef: React.RefObject<HTMLInputElement>;
 
   constructor(props: GeoSpatialFilterProps) {
     super(props);
+    this.state = {
+      search: '',
+    };
     this.source = new VectorSource({ wrapX: true });
     this.source.on('addfeature', evt => this.onSelectCoordinates(evt));
     this.componentDidUpdate();
-    this.onSearch = this.onSearch.bind(this);
-    this.searchRef = React.createRef();
+    this.onSearchSubmit = this.onSearchSubmit.bind(this);
   }
 
   featureMatchesProps(feature: Feature): boolean {
@@ -191,24 +200,21 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
     map.addInteraction(draw);
   }
 
-  onSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (this.searchRef.current && this.searchRef.current.value) {
-      searchNominatim(this.searchRef.current.value)
-        .then(results => {
-          if (results.length > 0) {
-            const [minLat, maxLat, minLon, maxLon] = results[0].boundingbox;
-            this.props.onSelectCoordinates({
-              type: 'geospatial_variable',
-              latitude1: maxLat.toString(),
-              longitude1: minLon.toString(),
-              latitude2: minLat.toString(),
-              longitude2: maxLon.toString(),
-            });
-          }
-        })
-        .catch(e => alert('Error from search server'));
-    }
+  onSearchSubmit() {
+    searchNominatim(this.state.search)
+      .then(results => {
+        if (results.length > 0) {
+          const [minLat, maxLat, minLon, maxLon] = results[0].boundingbox;
+          this.props.onSelectCoordinates({
+            type: 'geospatial_variable',
+            latitude1: maxLat.toString(),
+            longitude1: minLon.toString(),
+            latitude2: minLat.toString(),
+            longitude2: maxLon.toString(),
+          });
+        }
+      })
+      .catch(e => alert('Error from search server'));
   }
 
   render() {
@@ -228,14 +234,14 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
         <div className="row">
           <div className="col-md-12" style={{ fontSize: '.9rem' }}>
             {NOMINATIM_URL ? (
-              <form onSubmit={this.onSearch} className="form-inline">
-                <input name="location" ref={this.searchRef} className="mb-2" />
-                <input
-                  type="submit"
-                  className="btn btn-secondary ml-sm-2 mb-2"
-                  value="Search"
+              <div className="col-md-6 p-0">
+                <SearchBar
+                  active
+                  value={this.state.search}
+                  onQueryChange={search => this.setState({ search })}
+                  onSubmitQuery={this.onSearchSubmit}
                 />
-              </form>
+              </div>
             ) : (
               undefined
             )}
