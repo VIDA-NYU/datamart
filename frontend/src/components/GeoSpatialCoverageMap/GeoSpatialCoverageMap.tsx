@@ -17,6 +17,33 @@ import './GeoSpatialCoverageMap.css';
 import { transformCoordinates, centralizeMapToExtent } from '../spatial-utils';
 import 'ol/ol.css';
 
+function geohashToLatLong(hash: string, base: number) {
+  if (base !== 4) {
+    throw new Error('Only geohash4 is implemented');
+  }
+  const topLeft = [-180, -90];
+  const bottomRight = [180, 90];
+  for (let i = 0; i < hash.length; i++) {
+    {
+      const mid = (topLeft[0] + bottomRight[0]) / 2;
+      if (hash[i] === '2' || hash[i] === '3') {
+        topLeft[0] = mid;
+      } else {
+        bottomRight[0] = mid;
+      }
+    }
+    {
+      const mid = (topLeft[1] + bottomRight[1]) / 2;
+      if (hash[i] === '1' || hash[i] === '3') {
+        topLeft[1] = mid;
+      } else {
+        bottomRight[1] = mid;
+      }
+    }
+  }
+  return { topLeft, bottomRight };
+}
+
 interface GeoSpatialCoverageMapProps {
   coverage: SpatialCoverage;
 }
@@ -49,21 +76,59 @@ class GeoSpatialCoverageMap extends React.PureComponent<
     let minY = Infinity;
     let maxY = -Infinity;
 
-    for (let j = 0; j < coverage.ranges.length; j++) {
-      const topLeft = coverage.ranges[j].range.coordinates[0];
-      const bottomRight = coverage.ranges[j].range.coordinates[1];
-      minX = Math.min(topLeft[0], minX);
-      maxX = Math.max(bottomRight[0], maxX);
-      minY = Math.min(bottomRight[1], minY);
-      maxY = Math.max(topLeft[1], maxY);
+    if (coverage.geohashes4?.length) {
+      // First pass to compute scale
+      let maxNumber = 1;
+      for (let j = 0; j < coverage.geohashes4.length; j++) {
+        maxNumber = Math.max(maxNumber, coverage.geohashes4[j].number);
+      }
 
-      polygons.push([
-        [topLeft[0], topLeft[1]],
-        [topLeft[0], bottomRight[1]],
-        [bottomRight[0], bottomRight[1]],
-        [bottomRight[0], topLeft[1]],
-        [topLeft[0], topLeft[1]],
-      ]);
+      for (let j = 0; j < coverage.geohashes4.length; j++) {
+        const { hash, number: hashNumber } = coverage.geohashes4[j];
+        const { topLeft, bottomRight } = geohashToLatLong(hash, 4);
+        minX = Math.min(topLeft[0], minX);
+        maxX = Math.max(bottomRight[0], maxX);
+        minY = Math.min(bottomRight[1], minY);
+        maxY = Math.max(topLeft[1], maxY);
+        polygons.push({
+          geom: [
+            [topLeft[0], topLeft[1]],
+            [topLeft[0], bottomRight[1]],
+            [bottomRight[0], bottomRight[1]],
+            [bottomRight[0], topLeft[1]],
+            [topLeft[0], topLeft[1]],
+          ],
+          style: new Style({
+            fill: new Fill({
+              color: [0, 0, 255, (hashNumber / maxNumber) * 0.8 + 0.2],
+            }),
+            stroke: new Stroke({
+              color: '#000',
+              width: 2,
+            }),
+          }),
+        });
+      }
+    } else if (coverage.ranges?.length) {
+      for (let j = 0; j < coverage.ranges.length; j++) {
+        const topLeft = coverage.ranges[j].range.coordinates[0];
+        const bottomRight = coverage.ranges[j].range.coordinates[1];
+        minX = Math.min(topLeft[0], minX);
+        maxX = Math.max(bottomRight[0], maxX);
+        minY = Math.min(bottomRight[1], minY);
+        maxY = Math.max(topLeft[1], maxY);
+
+        polygons.push({
+          geom: [
+            [topLeft[0], topLeft[1]],
+            [topLeft[0], bottomRight[1]],
+            [bottomRight[0], bottomRight[1]],
+            [bottomRight[0], topLeft[1]],
+            [topLeft[0], topLeft[1]],
+          ],
+          style: undefined,
+        });
+      }
     }
 
     const extent = [minX, minY, maxX, maxY];
@@ -98,9 +163,13 @@ class GeoSpatialCoverageMap extends React.PureComponent<
 
     // drawing bounding boxes
     for (let j = 0; j < polygons.length; j++) {
-      const polygon = new Polygon([polygons[j]]);
+      const { geom, style } = polygons[j];
+      const polygon = new Polygon([geom]);
       polygon.transform('EPSG:4326', 'EPSG:3857');
       const feature = new Feature(polygon);
+      if (style) {
+        feature.setStyle(style);
+      }
       source.addFeature(feature);
     }
 
