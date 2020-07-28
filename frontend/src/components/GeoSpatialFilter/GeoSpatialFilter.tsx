@@ -240,6 +240,7 @@ class GeoSpatialFilter extends React.PureComponent<
                   value={this.state.search}
                   onQueryChange={search => this.setState({ search })}
                   onSubmitQuery={this.onSearchSubmit}
+                  placeholder="Search Map"
                 />
               </div>
             ) : (

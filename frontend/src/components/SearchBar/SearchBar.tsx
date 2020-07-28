@@ -4,6 +4,7 @@ import * as Icon from 'react-feather';
 
 interface SearchBarProps {
   active: boolean;
+  placeholder?: string;
   value: string;
   onQueryChange: (query: string) => void;
   onSubmitQuery: () => void;
@@ -38,6 +39,7 @@ class SearchBar extends React.PureComponent<SearchBarProps> {
             type="text"
             name="search"
             className="form-control SearchBar-input"
+            placeholder={this.props.placeholder}
             value={this.props.value}
             onChange={this.handleChange}
           />
