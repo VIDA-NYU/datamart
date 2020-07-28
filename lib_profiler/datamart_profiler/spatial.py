@@ -1,10 +1,13 @@
 import json
 import logging
+import numpy
+import numpy.random
 import prometheus_client
 import re
 import requests
 from sklearn.cluster import KMeans
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.neighbors._kd_tree import KDTree
 import time
 from urllib.parse import urlencode
 
@@ -25,8 +28,8 @@ MAX_NOMINATIM_REQUESTS = 200
 NOMINATIM_BATCH_SIZE = 30
 NOMINATIM_MIN_SPLIT_BATCH_SIZE = 6  # Batches >=this are divided on failure
 
-LATITUDE = ('latitude', 'lat')
-LONGITUDE = ('longitude', 'long', 'lon', 'lng')
+LATITUDE = ('latitude', 'lat', 'ycoord', 'y_coord')
+LONGITUDE = ('longitude', 'long', 'lon', 'lng', 'xcoord', 'x_coord')
 
 
 PROM_NOMINATIM_REQS = prometheus_client.Counter(
@@ -284,3 +287,25 @@ def nominatim_resolve_all(url, array, max_requests=MAX_NOMINATIM_REQUESTS):
         processed,
     )
     return locations, non_empty
+
+
+def median_smallest_distance(points, tree=None):
+    """Median over all points of the distance to their closest neighbor.
+
+    This gives an idea of the "grid size" of a point dataset.
+    """
+    points = numpy.array(points)
+    if tree is None:
+        # points = numpy.unique(points, axis=0)  # Too slow
+        points = numpy.array(list(set(tuple(p) for p in points)))
+        tree = KDTree(points)
+
+    # Get the minimum distances to neighbors for a sample of points
+    rnd = numpy.random.RandomState(89)
+    sample_size = min(len(points), 100)
+    sample_idx = rnd.choice(len(points), sample_size, replace=False)
+    sample = points[sample_idx]
+    distances, _ = tree.query(sample, k=2, return_distance=True)
+
+    # Return the median of that
+    return numpy.median(distances[:, 1])

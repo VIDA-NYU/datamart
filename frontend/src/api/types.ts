@@ -9,6 +9,7 @@ export interface ColumnAggregations {
 // Keep in sync with datamart_profiler's temporal_aggregation_keys
 export enum TemporalResolution {
   YEAR = 'year',
+  QUARTER = 'quarter',
   MONTH = 'month',
   WEEK = 'week',
   DAY = 'day',

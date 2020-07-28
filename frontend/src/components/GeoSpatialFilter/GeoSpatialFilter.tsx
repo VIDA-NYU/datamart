@@ -23,6 +23,7 @@ import {
   transformCoordinates,
   centralizeMapToFeature,
   MyMapBrowserEvent,
+  wrapLongitude,
 } from '../spatial-utils';
 import 'ol/ol.css';
 
@@ -41,7 +42,7 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
     this.state = {
       selectedCoordinates: undefined,
     };
-    this.source = new VectorSource({ wrapX: false });
+    this.source = new VectorSource({ wrapX: true });
     this.source.on('addfeature', evt => this.onSelectCoordinates(evt));
     this.componentDidUpdate();
   }
@@ -109,7 +110,13 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
       // Add in the following map controls
       controls: DefaultControls().extend([
         new ZoomSlider(),
-        new MousePosition(),
+        new MousePosition({
+          projection: 'EPSG:4326',
+          coordinateFormat: ([x, y]) => {
+            x = wrapLongitude(x);
+            return `${x.toFixed(4)} ${y.toFixed(4)}`;
+          },
+        }),
         new ScaleLine(),
         new OverviewMap(),
       ]),
@@ -138,12 +145,15 @@ class GeoSpatialFilter extends React.PureComponent<GeoSpatialFilterProps> {
       return;
     }
 
-    const {
+    let {
       topLeftLat,
       topLeftLon,
       bottomRightLat,
       bottomRightLon,
     } = transformCoordinates(evt.feature);
+
+    topLeftLon = wrapLongitude(topLeftLon);
+    bottomRightLon = wrapLongitude(bottomRightLon);
 
     this.props.onSelectCoordinates({
       type: 'geospatial_variable',

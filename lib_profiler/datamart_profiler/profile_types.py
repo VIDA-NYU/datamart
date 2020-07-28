@@ -4,6 +4,7 @@ import re
 import regex
 
 from . import types
+from .spatial import LATITUDE, LONGITUDE
 from .temporal import parse_date
 
 
@@ -182,9 +183,9 @@ def identify_types(array, name, geo_data):
                     if -90.0 <= float(elem) <= 90.0:
                         num_lat += 1
 
-        if num_lat >= threshold and 'lat' in name.lower():
+        if num_lat >= threshold and any(n in name.lower() for n in LATITUDE):
             semantic_types_dict[types.LATITUDE] = None
-        if num_long >= threshold and 'lon' in name.lower():
+        if num_long >= threshold and any(n in name.lower() for n in LONGITUDE):
             semantic_types_dict[types.LONGITUDE] = None
 
     # Identify dates

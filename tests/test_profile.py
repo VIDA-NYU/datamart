@@ -1,6 +1,7 @@
 from datetime import datetime
 from dateutil.tz import UTC
 import pandas
+import random
 import requests
 import unittest
 import textwrap
@@ -17,7 +18,7 @@ from .utils import DataTestCase, data
 
 def check_ranges(min_, max_):
     def check(ranges):
-        assert len(ranges) == 3
+        assert 2 <= len(ranges) <= 3
         for rg in ranges:
             assert rg.keys() == {'range'}
             rg = rg['range']
@@ -352,6 +353,15 @@ class TestTemporalResolutions(unittest.TestCase):
             ]),
             'year',
         )
+        self.assertEqual(
+            get_res([
+                '2017-01-01',
+                '2018-04-01',
+                '2018-07-01',
+                '2018-12-31',
+            ]),
+            'quarter',
+        )
 
 
 class TestTypes(unittest.TestCase):
@@ -649,4 +659,26 @@ class TestGeo(DataTestCase):
                     },
                 ],
             },
+        )
+
+
+class TestMedianDist(unittest.TestCase):
+    def test_median_dist(self):
+        points = []
+
+        def make_grid(mx, my):
+            for y in range(-100, 100):
+                for x in range(-100, 100):
+                    points.append((
+                        mx + x + random.random() * 0.2,
+                        my + y + random.random() * 0.2,
+                    ))
+        make_grid(0, 0)
+        make_grid(500, 0)
+        make_grid(-200, 300)
+
+        self.assertAlmostEqual(
+            spatial.median_smallest_distance(points),
+            0.9,
+            delta=0.05
         )

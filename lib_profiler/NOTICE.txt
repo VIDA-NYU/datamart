@@ -1,0 +1,7 @@
+Datamart profiler library
+
+Copyright 2018 New York University
+
+This product includes software developed at
+New York University
+https://www.nyu.edu/

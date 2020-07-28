@@ -27,8 +27,9 @@ class DataTestCase(unittest.TestCase):
             else:
                 if not isinstance(ret, bool):
                     raise TypeError(
-                        "Validation function: expected bool, returned %r" %
-                        type(ret)
+                        "Validation function: expected bool, returned %r at %s" % (
+                            type(ret), pos
+                        )
                     )
                 if not ret:
                     raise AssertionError(

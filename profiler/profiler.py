@@ -126,7 +126,13 @@ class Profiler(object):
             host=os.environ['LAZO_SERVER_HOST'],
             port=int(os.environ['LAZO_SERVER_PORT'])
         )
-        self.nominatim = os.environ['NOMINATIM_URL']
+        if os.environ.get('NOMINATIM_URL'):
+            self.nominatim = os.environ['NOMINATIM_URL']
+        else:
+            self.nominatim = None
+            logger.warning(
+                "$NOMINATIM_URL is not set, not resolving URLs"
+            )
         self.geo_data = GeoData.from_local_cache()
         self.channel = None
 

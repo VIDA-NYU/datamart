@@ -27,11 +27,12 @@ setup(name='datamart-uaz_indicators-service',
       },
       long_description="Datamart discovery service for indicators from the " +
                        "University of Arizona",
-      license='BSD-3-Clause',
+      license='Apache-2.0',
       keywords=['datamart'],
       classifiers=[
           'Development Status :: 3 - Alpha',
           'Intended Audience :: Science/Research',
+          'License :: OSI Approved :: Apache Software License',
           'Natural Language :: English',
           'Operating System :: OS Independent',
           'Programming Language :: Python :: 3 :: Only',

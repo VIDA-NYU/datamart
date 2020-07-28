@@ -40,3 +40,16 @@ export function centralizeMapToFeature(map: Map, feature: FeatureLike) {
   const extent = feature.getGeometry().getExtent();
   centralizeMapToExtent(map, extent);
 }
+
+export function wrapLongitude(x: number) {
+  if (-180 <= x && x <= 180) {
+    return x;
+  }
+  console.log(`>  ${x} ...`);
+  x += 180;
+  x = x % 360;
+  x = (x + 360) % 360; // second pass for negative remainders
+  x -= 180;
+  console.log(`<< ${x}`);
+  return x;
+}
