@@ -39,7 +39,7 @@ export interface SpatialCoverage {
       type: 'envelope';
     };
   }>;
-  geohashes4?: Array<{ hash: string; number: number}>;
+  geohashes4?: Array<{ hash: string; number: number }>;
 }
 
 export interface Metadata {

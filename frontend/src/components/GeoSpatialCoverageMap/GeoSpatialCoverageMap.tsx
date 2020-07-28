@@ -8,7 +8,6 @@ import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource, OSM as OSMSource } from 'ol/source';
 import { transformExtent, transform } from 'ol/proj';
 import { SpatialCoverage } from '../../api/types';
-import { PersistentComponent } from '../visus/PersistentComponent/PersistentComponent';
 import Polygon from 'ol/geom/Polygon';
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
@@ -22,7 +21,7 @@ interface GeoSpatialCoverageMapProps {
   coverage: SpatialCoverage;
 }
 
-class GeoSpatialCoverageMap extends PersistentComponent<
+class GeoSpatialCoverageMap extends React.PureComponent<
   GeoSpatialCoverageMapProps
 > {
   mapId = generateRandomId();
@@ -40,29 +39,19 @@ class GeoSpatialCoverageMap extends PersistentComponent<
     };
   }
 
-  createPolygons(element: SpatialCoverage) {
+  createPolygons(coverage: SpatialCoverage) {
     // collect all the bounding boxes and find their
     // extent (outer bounding box)
     const polygons = [];
 
-    let topLeft = element.ranges[0].range.coordinates[0];
-    let bottomRight = element.ranges[0].range.coordinates[1];
-    let minX = topLeft[0];
-    let maxX = bottomRight[0];
-    let minY = bottomRight[1];
-    let maxY = topLeft[1];
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
 
-    polygons.push([
-      [topLeft[0], topLeft[1]],
-      [topLeft[0], bottomRight[1]],
-      [bottomRight[0], bottomRight[1]],
-      [bottomRight[0], topLeft[1]],
-      [topLeft[0], topLeft[1]],
-    ]);
-
-    for (let j = 1; j < element.ranges.length; j++) {
-      topLeft = element.ranges[j].range.coordinates[0];
-      bottomRight = element.ranges[j].range.coordinates[1];
+    for (let j = 0; j < coverage.ranges.length; j++) {
+      const topLeft = coverage.ranges[j].range.coordinates[0];
+      const bottomRight = coverage.ranges[j].range.coordinates[1];
       minX = Math.min(topLeft[0], minX);
       maxX = Math.max(bottomRight[0], maxX);
       minY = Math.min(bottomRight[1], minY);
@@ -76,11 +65,8 @@ class GeoSpatialCoverageMap extends PersistentComponent<
         [topLeft[0], topLeft[1]],
       ]);
     }
-    const extent = transformExtent(
-      [minX, minY, maxX, maxY],
-      'EPSG:4326',
-      'EPSG:3857'
-    );
+
+    const extent = [minX, minY, maxX, maxY];
     return { extent, polygons };
   }
 
@@ -160,7 +146,10 @@ class GeoSpatialCoverageMap extends PersistentComponent<
       }),
     });
 
-    centralizeMapToExtent(map, extent);
+    centralizeMapToExtent(
+      map,
+      transformExtent(extent, 'EPSG:4326', 'EPSG:3857')
+    );
 
     this.setupHoverPopUp(map);
   }
