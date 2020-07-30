@@ -453,7 +453,7 @@ class Search(BaseHandler, GracefulHandler, ProfilePostedData):
                     query_args_main,
                     query_sup_functions, query_sup_filters,
                     tabular_variables,
-                ) = parse_query(query)
+                ) = parse_query(query, self.application.geo_data)
             except ClientError as e:
                 return self.send_error_json(400, str(e))
 
