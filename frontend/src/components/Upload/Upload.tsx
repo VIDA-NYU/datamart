@@ -3,6 +3,15 @@ import { Tabs, Tab, TabContent, TabPane } from '../ui/Tabs/Tabs';
 import * as Icon from 'react-feather';
 import * as api from '../../api/rest';
 import { SubmitButton } from '../ui/Button/Button';
+import './Upload.css';
+import {
+  ColumnMetadata,
+  Annotation,
+  TypesCategory,
+  ColumnType,
+} from '../../api/types';
+import { ProfileDataset } from './ProfileDataset';
+import { isSubstrInclude } from '../../utils';
 
 interface Validation {
   valid: boolean;
@@ -19,6 +28,10 @@ interface UploadFormState {
   address?: string;
   validation: Validation;
   submitting: boolean;
+  profilingStatus?: api.RequestStatus;
+  failedProfiler?: string;
+  profiledData?: api.ProfileResult;
+  columnsName: string[];
   customFields?: api.CustomFields;
   customValues: Map<string, string>;
 }
@@ -49,6 +62,7 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
       });
     });
     this.onFormSubmit = this.onFormSubmit.bind(this);
+    this.onProfileData = this.onProfileData.bind(this);
   }
 
   initialState() {
@@ -58,6 +72,8 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
       description: '',
       validation: { valid: true, errors: {} },
       submitting: false,
+      profilingStatus: undefined,
+      columnsName: [],
       customValues: new Map(),
     };
   }
@@ -69,17 +85,24 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
       this.setState({ validation });
     } else {
       this.setState({ submitting: true });
+      const modifiedColumns = this.state.profiledData?.columns.filter(col =>
+        this.state.columnsName.includes(col.name)
+      );
       const success = await this.props.onFormSubmit({
         file: this.getFile(),
         address: this.state.address ? this.state.address : undefined,
         name: this.state.name,
         description: this.state.description,
+        manualAnnotations: { columns: modifiedColumns || [] },
         customFields: this.state.customValues,
       });
       if (success) {
         this.setState(this.initialState());
       } else {
-        this.setState({ submitting: false });
+        this.setState({
+          submitting: false,
+          profilingStatus: undefined,
+        });
       }
     }
   }
@@ -112,13 +135,114 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
     }
   }
 
+  async onProfileData() {
+    this.setState({ profilingStatus: api.RequestStatus.IN_PROGRESS });
+    const file = this.getFile();
+    if (file) {
+      const result = api.profile(file);
+      result
+        .then(data => {
+          this.setState({
+            profiledData: data,
+            profilingStatus: api.RequestStatus.SUCCESS,
+          });
+          return true;
+        })
+        .catch(err => {
+          // Handle failure
+          this.setState({
+            failedProfiler: `${err}`,
+            profilingStatus: api.RequestStatus.ERROR,
+          });
+        });
+    }
+  }
+
+  addAnnotation(col: ColumnMetadata, value: string): ColumnMetadata {
+    if (
+      value.includes(ColumnType.LATITUDE) ||
+      value.includes(ColumnType.LONGITUDE)
+    ) {
+      return {
+        ...col,
+        semantic_types: [...col.semantic_types, value.split('-')[0]],
+        latlong_pair: value.substring(
+          value.lastIndexOf('-(pair') + '-(pair'.length,
+          value.lastIndexOf(')')
+        ),
+      };
+    } else {
+      return {
+        ...col,
+        semantic_types: [...col.semantic_types, value],
+      };
+    }
+  }
+
+  removeAnnotation(col: ColumnMetadata, value: string): ColumnMetadata {
+    const updatedColumn: ColumnMetadata = {
+      ...col,
+      semantic_types: col.semantic_types.filter(item => item !== value),
+    };
+    if (
+      !(
+        isSubstrInclude(col['semantic_types'], ColumnType.LATITUDE) &&
+        isSubstrInclude(col['semantic_types'], ColumnType.LONGITUDE)
+      ) &&
+      (value.includes(ColumnType.LATITUDE) ||
+        value.includes(ColumnType.LONGITUDE)) &&
+      'latlong_pair' in updatedColumn
+    ) {
+      delete updatedColumn['latlong_pair'];
+    }
+    return updatedColumn;
+  }
+
+  updateColumnType(
+    value: string,
+    column: ColumnMetadata,
+    type: TypesCategory,
+    annotation: Annotation
+  ) {
+    if (this.state.profiledData) {
+      const modifiedColumns: ColumnMetadata[] = this.state.profiledData.columns.map(
+        (col: ColumnMetadata) => {
+          if (col.name === column.name) {
+            if (type === TypesCategory.STRUCTURAL) {
+              return { ...col, structural_type: value };
+            }
+            if (type === TypesCategory.SEMANTIC) {
+              if (annotation === Annotation.ADD) {
+                return this.addAnnotation(col, value);
+              }
+              if (annotation === Annotation.REMOVE) {
+                return this.removeAnnotation(col, value);
+              }
+            }
+            return { ...col };
+          } else {
+            return { ...col };
+          }
+        }
+      );
+      this.setState({
+        columnsName: [...this.state.columnsName, column.name],
+        profiledData: { ...this.state.profiledData, columns: modifiedColumns },
+      });
+    }
+  }
+
   render() {
     let customFields = <p>Loading custom fields...</p>;
     if (this.state.customFields !== undefined) {
       customFields = (
         <>
           {Object.entries(this.state.customFields).map(([f, opts]) => (
-            <FormGroup for={`upload-${f}`} label={opts.label} key={f}>
+            <FormGroup
+              for={`upload-${f}`}
+              label={opts.label + (opts.required ? ' *' : '')}
+              key={f}
+            >
               <input
                 type="text"
                 id={`upload-${f}`}
@@ -149,6 +273,7 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
                 this.state.validation.errors.file ? ' is-invalid' : ''
               }`}
               ref={this.fileInput}
+              onChange={this.onProfileData}
             />
             {this.state.validation.errors.file && (
               <div className="invalid-feedback">
@@ -202,6 +327,28 @@ class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
             onChange={e => this.setState({ description: e.target.value })}
           />
         </FormGroup>
+        {this.state.profilingStatus !== undefined &&
+          this.props.type === 'upload' &&
+          this.fileInput.current && (
+            <FormGroup for="upload-sample" label="Dataset Sample">
+              <ProfileDataset
+                profilingStatus={this.state.profilingStatus}
+                profiledData={this.state.profiledData}
+                failedProfiler={this.state.failedProfiler}
+                onEdit={(value, type, column) =>
+                  this.updateColumnType(value, column, type, Annotation.ADD)
+                }
+                onRemove={(value, column) =>
+                  this.updateColumnType(
+                    value,
+                    column,
+                    TypesCategory.SEMANTIC,
+                    Annotation.REMOVE
+                  )
+                }
+              />
+            </FormGroup>
+          )}
         {customFields}
         <FormGroup>
           <SubmitButton label="Upload" loading={this.state.submitting} />

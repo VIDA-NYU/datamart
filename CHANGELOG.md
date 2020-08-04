@@ -1,11 +1,11 @@
-0.7 (TBD)
-=========
+0.7 (2020-08-04)
+================
 
 Incompatible changes:
 * Add a Zenodo discovery plugin (can be configured with a keyword)
 * Renamed docker-compose services to use dashes `-` instead of underscores `_`
 * Containers no longer run as root, change permissions on volumes to uid 998
-* Changed Elasticsearch index settings, use reindex API to update (`POST /_reindex`)
+* Changed Elasticsearch index settings, use `scripts/es_reindex.sh` to update
 * Changed Redis cache from Pickle to JSON, make sure to clear Redis on update
 
 Enhancements:
@@ -34,11 +34,13 @@ Enhancements:
 * Update URL in frontend to reflect current query
 * Add a "TA3 API" allowing systems to use our search frontend as part of their workflow, and collect results directly from Datamart afterwards
 * Add "custom fields" which can be added to the upload form via configuration
-* ~~Allow the user to override profiled information on the upload form~~
+* Allow the user to preview the profiled information on the upload form, and manually override column metadata
 * Have lib_augmentation accept file objects
 * Implement spatial joins using a KDTree to align the right dataset to the nearest point of the left dataset
 * Implement joins on multiple columns (e.g. spatio-temporal)
 * Re-license Datamart under Apache-2.0
+* Allow searching by named spatial area in API
+* Decode dates in Excel files, from the floating-point number of days format
 
 0.6 (2020-04-29)
 ================

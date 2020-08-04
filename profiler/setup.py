@@ -11,6 +11,7 @@ req = [
     'lazo-index-service==0.5.1',
     'prometheus_client',
     'xlrd',
+    'defusedxml',
     'datamart_core',
     'datamart_materialize',
     'datamart_profiler',

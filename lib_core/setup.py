@@ -31,9 +31,8 @@ setup(name='datamart_core',
       license='BSD-3-Clause',
       keywords=['datamart'],
       classifiers=[
-          'Development Status :: 3 - Alpha',
+          'Development Status :: 4 - Beta',
           'Intended Audience :: Science/Research',
-          'Natural Language :: English',
           'Operating System :: OS Independent',
           'Programming Language :: Python :: 3 :: Only',
           'Topic :: Scientific/Engineering :: Information Analysis'])

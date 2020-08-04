@@ -53,6 +53,8 @@ async def freshen(datasets):
             metadata['description'] = obj['description']
         if obj.get('date'):
             metadata['date'] = obj['date']
+        if obj.get('manual_annotations'):
+            metadata['manual_annotations'] = obj['manual_annotations']
         await amqp_profile_exchange.publish(
             json2msg(dict(id=h['_id'], metadata=metadata)),
             '',

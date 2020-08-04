@@ -113,18 +113,20 @@ def normalize_latlong_column_name(name, substrings):
 def pair_latlong_columns(columns_lat, columns_long):
     # Normalize latitude column names
     normalized_lat = {}
-    for i, (name, values_lat) in enumerate(columns_lat):
-        name = normalize_latlong_column_name(name, LATITUDE)
+    for i, (name, values_lat, annot_pair) in enumerate(columns_lat):
+        # check if a pair was defined by the user (human-in-the-loop)
+        name = annot_pair if annot_pair is not None else normalize_latlong_column_name(name, LATITUDE)
         normalized_lat[name] = i
 
     # Go over normalized longitude column names and try to match
     pairs = []
     missed_long = []
-    for name, values_long in columns_long:
-        norm_name = normalize_latlong_column_name(name, LONGITUDE)
+    for name, values_long, annot_pair in columns_long:
+        # check if a pair was defined by the user (human-in-the-loop)
+        norm_name = annot_pair if annot_pair is not None else normalize_latlong_column_name(name, LONGITUDE)
         if norm_name in normalized_lat:
             pairs.append((columns_lat[normalized_lat.pop(norm_name)],
-                          (name, values_long)))
+                          (name, values_long, annot_pair)))
         else:
             missed_long.append(name)
 

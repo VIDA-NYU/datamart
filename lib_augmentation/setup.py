@@ -9,13 +9,13 @@ os.chdir(os.path.abspath(os.path.dirname(__file__)))
 req = [
     'pandas',
     'numpy',
-    'datamart_materialize==0.6.2',
-    'datamart_profiler==0.6.2',
+    'datamart_materialize==0.7',
+    'datamart_profiler==0.7',
 ]
 with io.open('README.rst', encoding='utf-8') as fp:
     description = fp.read()
 setup(name='datamart_augmentation',
-      version='0.6.1',
+      version='0.7',
       packages=['datamart_augmentation'],
       install_requires=req,
       description="Augmentation functions for Datamart services",
@@ -33,10 +33,9 @@ setup(name='datamart_augmentation',
       license='Apache-2.0',
       keywords=['datamart'],
       classifiers=[
-          'Development Status :: 3 - Alpha',
+          'Development Status :: 4 - Beta',
           'Intended Audience :: Science/Research',
           'License :: OSI Approved :: Apache Software License',
-          'Natural Language :: English',
           'Operating System :: OS Independent',
           'Programming Language :: Python :: 3 :: Only',
           'Topic :: Scientific/Engineering :: Information Analysis'])

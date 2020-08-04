@@ -37,8 +37,10 @@ export function centralizeMapToExtent(map: Map, extent: Extent) {
 }
 
 export function centralizeMapToFeature(map: Map, feature: FeatureLike) {
-  const extent = feature.getGeometry().getExtent();
-  centralizeMapToExtent(map, extent);
+  const extent = feature.getGeometry()?.getExtent();
+  if (extent) {
+    centralizeMapToExtent(map, extent);
+  }
 }
 
 export function wrapLongitude(x: number) {

@@ -76,27 +76,30 @@ class TestLatlongSelection(DataTestCase):
         )
 
     def test_pairing(self):
-        """Test pairing latitude and longitude columns by name."""
+        """Test pairing latitude and longitude columns by name or matching pairs defined by the user."""
         pairs, (missed_lat, missed_long) = spatial.pair_latlong_columns(
             [
-                ('Pickup_latitude', 1),
-                ('lat', 7),
-                ('dropoff_latitude', 2),
-                ('latitude_place', 8),
+                ('Pickup_latitude', 1, None),
+                ('lat', 7, None),
+                ('dropoff_latitude', 2, None),
+                ('latitude_place', 8, None),
+                ('la_coord', 8, '1'),
             ],
             [
-                ('long', 5),
-                ('dropoff_Longitude', 3),
-                ('pickup_longitude', 4),
-                ('other_Longitude', 6),
+                ('long', 5, None),
+                ('dropoff_Longitude', 3, None),
+                ('pickup_longitude', 4, None),
+                ('other_Longitude', 6, None),
+                ('lo_coord', 8, '1'),
             ],
         )
         self.assertEqual(
             pairs,
             [
-                (('lat', 7), ('long', 5)),
-                (('dropoff_latitude', 2), ('dropoff_Longitude', 3)),
-                (('Pickup_latitude', 1), ('pickup_longitude', 4)),
+                (('lat', 7, None), ('long', 5, None)),
+                (('dropoff_latitude', 2, None), ('dropoff_Longitude', 3, None)),
+                (('Pickup_latitude', 1, None), ('pickup_longitude', 4, None)),
+                (('la_coord', 8, '1'), ('lo_coord', 8, '1')),
             ],
         )
         self.assertEqual(
@@ -209,16 +212,16 @@ class TestDates(DataTestCase):
                 'columns': [
                     {
                         'name': 'year',
-                        'structural_type': 'http://schema.org/Integer',
+                        'structural_type': 'http://schema.org/Text',
                         'semantic_types': ['http://schema.org/DateTime'],
                         'unclean_values_ratio': 0.0,
                         'num_distinct_values': 3,
-                        'mean': 2005.0,
-                        'stddev': lambda n: round(n, 3) == 0.816,
+                        'mean': 1104508800.0,
+                        'stddev': lambda n: round(n, 3) == 25784316.871,
                         'coverage': [
-                            year_rng(2004),
-                            year_rng(2005),
-                            year_rng(2006),
+                            year_rng(1072915200.0),
+                            year_rng(1104537600.0),
+                            year_rng(1136073600.0),
                         ],
                         'temporal_resolution': 'year',
                     },

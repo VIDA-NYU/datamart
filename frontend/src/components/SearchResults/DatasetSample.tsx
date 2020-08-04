@@ -27,13 +27,21 @@ function typeName(type: string) {
     .replace('https://metadata.datadrivendiscovery.org/types/', '');
 }
 
-function SemanticTypeBadge(props: { type: string }) {
+function SemanticTypeBadge(props: { type: string; column?: ColumnMetadata }) {
   const label = typeName(props.type);
   const semtypeClass = classMapping[label.toLowerCase()];
   const spanClass = semtypeClass
     ? `badge badge-pill semtype ${semtypeClass}`
     : 'badge badge-pill semtype';
-  return <span className={spanClass}>{label}</span>;
+  const tempResolution =
+    label.toLowerCase() === 'datetime' &&
+    props.column &&
+    props.column.temporal_resolution
+      ? ' ' + props.column.temporal_resolution
+      : '';
+  return (
+    <span className={spanClass}>{label + tempResolution.toUpperCase()}</span>
+  );
 }
 
 function TypeBadges(props: { column: ColumnMetadata }) {
@@ -43,7 +51,11 @@ function TypeBadges(props: { column: ColumnMetadata }) {
         {typeName(props.column.structural_type)}
       </span>
       {props.column.semantic_types.map(c => (
-        <SemanticTypeBadge type={c} key={`sem-type-badge-${c}`} />
+        <SemanticTypeBadge
+          type={c}
+          column={props.column}
+          key={`sem-type-badge-${c}`}
+        />
       ))}
     </>
   );
@@ -334,7 +346,6 @@ class DatasetSample extends React.PureComponent<
 
   render() {
     const { hit } = this.props;
-
     const sample = hit.sample;
     const headers = sample[0];
     const rows = sample.slice(1, sample.length - 1);

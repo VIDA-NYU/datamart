@@ -29,10 +29,9 @@ setup(name='datamart-socrata_discovery-service',
       license='Apache-2.0',
       keywords=['datamart'],
       classifiers=[
-          'Development Status :: 3 - Alpha',
+          'Development Status :: 4 - Beta',
           'Intended Audience :: Science/Research',
           'License :: OSI Approved :: Apache Software License',
-          'Natural Language :: English',
-          'Operating System :: OS Independent',
+          'Operating System :: Unix',
           'Programming Language :: Python :: 3 :: Only',
           'Topic :: Scientific/Engineering :: Information Analysis'])

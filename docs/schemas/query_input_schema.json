@@ -78,6 +78,7 @@
           "description": "Requested dates should match the requested granularity. For example, if 'day' is requested, the best match is a dataset with dates; however a dataset with hours is relevant too as hourly data can be aggregated into days.",
           "enum": [
             "year",
+            "quarter",
             "month",
             "week",
             "day",
@@ -100,6 +101,10 @@
           "enum": [
             "geospatial_variable"
           ]
+        },
+        "area_name":{
+          "type": "string",
+          "description": "A named administrative area."
         },
         "latitude1":{
           "type": "number",

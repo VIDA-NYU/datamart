@@ -75,6 +75,8 @@ datamart:
             type: long
           temporal_resolution:
             type: keyword
+          admin_area_level:
+            type: long
           # Numerical summaries
           mean:
             type: float
@@ -121,6 +123,9 @@ datamart:
           convert:
             type: object
             enabled: false
+      manual_annotations:
+        type: object
+        enabled: false
 datamart_columns:
   settings:
     <<: *analyzer
@@ -172,6 +177,8 @@ datamart_columns:
         type: long
       temporal_resolution:
         type: keyword
+      admin_area_level:
+        type: long
       # Numerical summaries
       mean:
         type: float

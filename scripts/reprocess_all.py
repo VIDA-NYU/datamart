@@ -42,6 +42,8 @@ async def import_all(folder):
                 metadata['description'] = obj['description']
             if obj.get('date'):
                 metadata['date'] = obj['date']
+            if obj.get('manual_annotations'):
+                metadata['manual_annotations'] = obj['manual_annotations']
             await amqp_profile_exchange.publish(
                 json2msg(dict(id=dataset_id, metadata=metadata)),
                 '',

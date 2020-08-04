@@ -216,6 +216,9 @@ class BaseHandler(RequestHandler):
                         'attachment; filename="%s"' % name)
         logger.info("Sending file...")
         with open(path, 'rb') as fp:
+            self.set_header('Content-Length', fp.seek(0, 2))
+            fp.seek(0, 0)
+
             BUFSIZE = 40960
             buf = fp.read(BUFSIZE)
             while buf:
@@ -453,7 +456,7 @@ class Search(BaseHandler, GracefulHandler, ProfilePostedData):
                     query_args_main,
                     query_sup_functions, query_sup_filters,
                     tabular_variables,
-                ) = parse_query(query)
+                ) = parse_query(query, self.application.geo_data)
             except ClientError as e:
                 return self.send_error_json(400, str(e))
 
@@ -961,6 +964,20 @@ class Upload(BaseHandler):
         if 'file' in self.request.files:
             file = self.request.files['file'][0]
             metadata['filename'] = file.filename
+            manual_annotations = self.get_body_argument(
+                'manual_annotations',
+                None,
+            )
+            if manual_annotations:
+                try:
+                    manual_annotations = json.loads(manual_annotations)
+                except json.JSONDecodeError:
+                    return await self.send_error_json(
+                        400,
+                        "Invalid manual annotations",
+                    )
+                metadata['manual_annotations'] = manual_annotations
+
             dataset_id = 'datamart.upload.%s' % uuid.uuid4().hex
 
             # Write file to shared storage

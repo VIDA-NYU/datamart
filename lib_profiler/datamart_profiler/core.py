@@ -184,8 +184,9 @@ def process_dataset(data, dataset_id=None, metadata=None,
 
     # Set column names
     for column_meta, name in zip(columns, data.columns):
-        if 'name' not in column_meta:
-            column_meta['name'] = name
+        if 'name' in column_meta and column_meta['name'] != name:
+            raise ValueError("Column names don't match")
+        column_meta['name'] = name
 
     if data.shape[0] == 0:
         logger.info("0 rows, returning early")
@@ -204,6 +205,21 @@ def process_dataset(data, dataset_id=None, metadata=None,
     # Administrative areas
     resolved_admin_areas = {}
 
+    # Get manual updates from the user
+    manual_columns = {}
+    manual_latlong_pairs = {}
+    if 'manual_annotations' in metadata:
+        if 'columns' in metadata['manual_annotations']:
+            manual_columns = {
+                col['name']: col
+                for col in metadata['manual_annotations']['columns']
+            }
+            manual_latlong_pairs = {
+                col['name']: col['latlong_pair']
+                for col in metadata['manual_annotations']['columns']
+                if 'latlong_pair' in col
+            }
+
     # Identify types
     logger.info("Identifying types, %d columns...", len(columns))
     with PROM_TYPES.time():
@@ -211,8 +227,13 @@ def process_dataset(data, dataset_id=None, metadata=None,
             logger.info("Processing column %d...", column_idx)
             array = data.iloc[:, column_idx]
             # Identify types
+            if column_meta['name'] in manual_columns:
+                manual = manual_columns[column_meta['name']]
+            else:
+                manual = None
+
             structural_type, semantic_types_dict, additional_meta = \
-                identify_types(array, column_meta['name'], geo_data)
+                identify_types(array, column_meta['name'], geo_data, manual)
             # Set structural type
             column_meta['structural_type'] = structural_type
             # Add semantic types to the ones already present
@@ -262,13 +283,17 @@ def process_dataset(data, dataset_id=None, metadata=None,
 
                 # Get lat/long columns
                 if types.LATITUDE in semantic_types_dict:
-                    columns_lat.append(
-                        (column_meta['name'], numerical_values)
-                    )
+                    columns_lat.append((
+                        column_meta['name'],
+                        numerical_values,
+                        manual_latlong_pairs.get(column_meta['name']),
+                    ))
                 elif types.LONGITUDE in semantic_types_dict:
-                    columns_long.append(
-                        (column_meta['name'], numerical_values)
-                    )
+                    columns_long.append((
+                        column_meta['name'],
+                        numerical_values,
+                        manual_latlong_pairs.get(column_meta['name']),
+                    ))
                 elif coverage:
                     ranges = get_numerical_ranges(
                         [x for x in numerical_values if x is not None]
@@ -405,7 +430,6 @@ def process_dataset(data, dataset_id=None, metadata=None,
     if lazo_client and columns_textual:
         # Indexing with lazo
         if not search:
-            # TODO: Remove previous data from lazo
             logger.info("Indexing textual data with Lazo...")
             try:
                 if data_path:
@@ -483,7 +507,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
                     col['semantic_types'].remove(types.LONGITUDE)
 
             # Compute ranges from lat/long pairs
-            for (name_lat, values_lat), (name_long, values_long) in pairs:
+            for (name_lat, values_lat, annot_pair), (name_long, values_long, annot_pair) in pairs:
                 values = []
                 for lat, long in zip(values_lat, values_long):
                     if (lat and long and  # Ignore None and 0

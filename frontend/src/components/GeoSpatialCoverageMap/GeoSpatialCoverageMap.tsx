@@ -206,7 +206,7 @@ class GeoSpatialCoverageMap extends PersistentComponent<
             );
         }
       } else {
-        map.getOverlayById('overlay'); //.setPosition(undefined);
+        map.getOverlayById('overlay').setPosition(undefined);
       }
     });
   }

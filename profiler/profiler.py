@@ -2,6 +2,7 @@ import aio_pika
 import asyncio
 import contextlib
 from datetime import datetime
+import defusedxml
 import elasticsearch
 import itertools
 import lazo_index_service
@@ -12,7 +13,8 @@ import threading
 import time
 
 from datamart_core.common import setup_logging, add_dataset_to_index, \
-    delete_dataset_from_index, log_future, json2msg, msg2json
+    delete_dataset_from_index, delete_dataset_from_lazo, log_future, \
+    json2msg, msg2json
 from datamart_core.fscache import cache_get_or_set
 from datamart_core.materialize import get_dataset, dataset_cache_key, \
     detect_format_convert_to_csv
@@ -36,6 +38,10 @@ PROM_PROFILING = prometheus_client.Gauge(
 )
 
 
+# https://xlrd.readthedocs.io/en/latest/vulnerabilities.html
+defusedxml.defuse_stdlib()
+
+
 @contextlib.contextmanager
 def prom_incremented(metric, amount=1):
     """Context manager that increments a metric, then decrements it at the end.
@@ -45,6 +51,34 @@ def prom_incremented(metric, amount=1):
         yield
     finally:
         metric.dec(amount)
+
+
+# FIXME: Work around https://gitlab.com/ViDA-NYU/datamart/datamart/-/issues/47
+class LazoDeleteFirst(object):
+    def __init__(self, lazo_client, es, dataset_id):
+        self._deleted = False
+        self._lazo = lazo_client
+        self._es = es
+        self._dataset_id = dataset_id
+
+    def _delete(self):
+        if not self._deleted:
+            self._deleted = True
+            delete_dataset_from_lazo(self._es, self._dataset_id, self._lazo)
+
+    def index_data_path(self, *args, **kwargs):
+        self._delete()
+        return self._lazo.index_data_path(*args, **kwargs)
+
+    def index_data(self, *args, **kwargs):
+        self._delete()
+        return self._lazo.index_data(*args, **kwargs)
+
+    def get_lazo_sketch_from_data_path(self, *args, **kwargs):
+        return self._lazo.get_lazo_sketch_from_data_path(*args, **kwargs)
+
+    def get_lazo_sketch_from_data(self, *args, **kwargs):
+        return self._lazo.get_lazo_sketch_from_data(*args, **kwargs)
 
 
 def materialize_and_process_dataset(
@@ -205,7 +239,7 @@ class Profiler(object):
                 materialize_and_process_dataset,
                 dataset_id,
                 metadata,
-                self.lazo_client,
+                LazoDeleteFirst(self.lazo_client, self.es, dataset_id),
                 self.nominatim,
                 self.geo_data,
                 self.profile_semaphore,

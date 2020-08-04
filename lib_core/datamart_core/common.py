@@ -148,6 +148,7 @@ def add_dataset_to_sup_index(es, dataset_id, metadata):
     """
     DISCARD_DATASET_FIELDS = [
         'columns', 'sample', 'materialize', 'spatial_coverage',
+        'manual_annotations',
     ]
     DISCARD_COLUMN_FIELDS = ['plot']
 
@@ -250,6 +251,47 @@ def add_dataset_to_lazo_storage(es, id, metadata):
     )
 
 
+def delete_dataset_from_lazo(es, dataset_id, lazo_client):
+    query = {
+        'query': {
+            'bool': {
+                'must': [
+                    {'term': {'dataset_id': dataset_id}},
+                    {'term': {'structural_type': types.TEXT}}
+                ],
+                'must_not': {
+                    'term': {'semantic_types': types.DATE_TIME}
+                }
+            }
+        }
+    }
+    textual_columns = list()
+    # FIXME: Use search-after API here?
+    from_ = 0
+    while True:
+        hits = es.search(
+            index='datamart_columns',
+            body=query,
+            from_=from_,
+            size=10000,
+        )['hits']['hits']
+        from_ += len(hits)
+        for h in hits:
+            textual_columns.append(h['_source']['name'])
+        if len(hits) != 10000:
+            break
+
+    if textual_columns:
+        ack = lazo_client.remove_sketches(dataset_id, textual_columns)
+        if ack:
+            logger.info(
+                "Deleted %d documents from Lazo",
+                len(textual_columns)
+            )
+        else:
+            logger.info("Error while deleting documents from Lazo")
+
+
 def delete_dataset_from_index(es, dataset_id, lazo_client=None):
     """
     Safely deletes a dataset from the 'datamart' index,
@@ -262,44 +304,7 @@ def delete_dataset_from_index(es, dataset_id, lazo_client=None):
     if lazo_client:
         # checking if there are any textual columns in the dataset
         # remove them from the Lazo index service
-        query = {
-            'query': {
-                'bool': {
-                    'must': [
-                        {'term': {'dataset_id': dataset_id}},
-                        {'term': {'structural_type': types.TEXT}}
-                    ],
-                    'must_not': {
-                        'term': {'semantic_types': types.DATE_TIME}
-                    }
-                }
-            }
-        }
-        textual_columns = list()
-        # FIXME: Use search-after API here?
-        from_ = 0
-        while True:
-            hits = es.search(
-                index='datamart_columns',
-                body=query,
-                from_=from_,
-                size=10000,
-            )['hits']['hits']
-            from_ += len(hits)
-            for h in hits:
-                textual_columns.append(h['_source']['name'])
-            if len(hits) != 10000:
-                break
-
-        if textual_columns:
-            ack = lazo_client.remove_sketches(dataset_id, textual_columns)
-            if ack:
-                logger.info(
-                    "Deleted %d documents from Lazo",
-                    len(textual_columns)
-                )
-            else:
-                logger.info("Error while deleting documents from Lazo")
+        delete_dataset_from_lazo(es, dataset_id, lazo_client)
 
     # Remove from alternate index
     try:

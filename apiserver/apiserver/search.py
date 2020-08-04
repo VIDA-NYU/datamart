@@ -1030,7 +1030,7 @@ def parse_keyword_query_sup_index(query_json):
     return query_sup_functions, query_sup_filters
 
 
-def parse_query(query_json):
+def parse_query(query_json, geo_data=None):
     """Parses a Datamart query, turning it into an Elasticsearch query
     over 'datamart' index as well as the supplementary indices
     ('datamart_columns' and 'datamart_spatial_coverage').
@@ -1047,7 +1047,8 @@ def parse_query(query_json):
     variables_query = None
     if 'variables' in query_json:
         variables_query, tabular_variables = parse_query_variables(
-            query_json['variables']
+            query_json['variables'],
+            geo_data,
         )
 
     # TODO: for now, temporal and geospatial variables are ignored
@@ -1059,7 +1060,7 @@ def parse_query(query_json):
     return query_args_main, query_sup_functions, query_sup_filters, list(set(tabular_variables))
 
 
-def parse_query_variables(data):
+def parse_query_variables(data, geo_data=None):
     """Parses the variables of a Datamart query, turning it into an
     Elasticsearch query over 'datamart' index
     """
@@ -1142,29 +1143,43 @@ def parse_query_variables(data):
         # geospatial variable
         # TODO: handle 'granularity'
         elif variable['type'] == 'geospatial_variable':
-            if (
-                'latitude1' not in variable or
-                'latitude2' not in variable or
-                'longitude1' not in variable or
-                'longitude2' not in variable
+            if 'area_name' in variable and geo_data:
+                areas = geo_data.resolve_names([variable['area_name']])
+                if areas and areas[0]:
+                    bounds = geo_data.get_bounds(areas[0].area)
+                    longitude1, longitude2, latitude1, latitude2 = bounds
+                    logger.info(
+                        "Resolved area %r to %r",
+                        variable['area_name'],
+                        areas[0].area,
+                    )
+                else:
+                    logger.warning("Unknown area %r", variable['area_name'])
+                    continue
+            elif (
+                'latitude1' in variable and
+                'latitude2' in variable and
+                'longitude1' in variable and
+                'longitude2' in variable
             ):
+                longitude1 = min(
+                    float(variable['longitude1']),
+                    float(variable['longitude2'])
+                )
+                longitude2 = max(
+                    float(variable['longitude1']),
+                    float(variable['longitude2'])
+                )
+                latitude1 = min(
+                    float(variable['latitude1']),
+                    float(variable['latitude2'])
+                )
+                latitude2 = max(
+                    float(variable['latitude1']),
+                    float(variable['latitude2'])
+                )
+            else:
                 continue
-            longitude1 = min(
-                float(variable['longitude1']),
-                float(variable['longitude2'])
-            )
-            longitude2 = max(
-                float(variable['longitude1']),
-                float(variable['longitude2'])
-            )
-            latitude1 = max(
-                float(variable['latitude1']),
-                float(variable['latitude2'])
-            )
-            latitude2 = min(
-                float(variable['latitude1']),
-                float(variable['latitude2'])
-            )
             output.append({
                 'nested': {
                     'path': 'spatial_coverage.ranges',
@@ -1176,8 +1191,8 @@ def parse_query_variables(data):
                                         'shape': {
                                             'type': 'envelope',
                                             'coordinates': [
-                                                [longitude1, latitude1],
-                                                [longitude2, latitude2],
+                                                [longitude1, latitude2],
+                                                [longitude2, latitude1],
                                             ],
                                         },
                                         'relation': 'intersects'

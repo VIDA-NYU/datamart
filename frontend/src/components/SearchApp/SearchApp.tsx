@@ -193,6 +193,11 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
   }
 
   componentDidUpdate(prevProps: SearchAppProps) {
+    if (this.state.searchQuery) {
+      document.body.classList.add('searchresults');
+    } else {
+      document.body.classList.remove('searchresults');
+    }
     const { location } = this.props;
     if (location !== prevProps.location) {
       this.updateSearchStateFromUrlParams(this.props.location);
@@ -201,12 +206,14 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
 
   componentDidMount() {
     this.fetchSources();
+    if (this.state.searchQuery) {
+      document.body.classList.add('searchresults');
+    }
     this.updateSearchStateFromUrlParams(this.props.location);
-    document.body.classList.add('searchapp');
   }
 
   componentWillUnmount() {
-    document.body.classList.remove('searchapp');
+    document.body.classList.remove('searchresults');
   }
 
   async fetchSources() {
