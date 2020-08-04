@@ -1,5 +1,5 @@
-0.7 (TBD)
-=========
+0.7 (2020-08-04)
+================
 
 Incompatible changes:
 * Add a Zenodo discovery plugin (can be configured with a keyword)
@@ -40,6 +40,7 @@ Enhancements:
 * Implement joins on multiple columns (e.g. spatio-temporal)
 * Re-license Datamart under Apache-2.0
 * Allow searching by named spatial area in API
+* Decode dates in Excel files, from the floating-point number of days format
 
 0.6 (2020-04-29)
 ================

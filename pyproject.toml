@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "datamart"
-version = "0.5"
+version = "0.7"
 description = "Datamart system meta-package"
 
 license = "BSD-3-Clause"
@@ -15,10 +15,9 @@ homepage = "https://auctus.vida-nyu.org/"
 keywords = ["datamart"]
 
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
+    "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
