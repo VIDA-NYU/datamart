@@ -19,3 +19,13 @@
 .badge-textual svg {
   color: #4d96b2;
 }
+
+.badge-categorical {
+  color: #fff;
+  background-color: #4d96b2;
+}
+
+.badge-number {
+  color: #fff;
+  background-color: #1ab082;
+}

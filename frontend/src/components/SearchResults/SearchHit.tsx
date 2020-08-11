@@ -5,7 +5,7 @@ import { formatSize } from '../../utils';
 import { SearchResult, RelatedFile, Session } from '../../api/types';
 import {
   Description,
-  DataTypes,
+  DatasetTypes,
   DatasetColumns,
   AddToSession,
 } from './Metadata';
@@ -123,7 +123,7 @@ class SearchHit extends React.PureComponent<SearchHitProps, SearchHitState> {
           <span className="small">{hit.metadata.source}</span>
           <Description hit={hit} label={false} />
           <DatasetColumns columns={hit.metadata.columns} label={false} />
-          <DataTypes hit={hit} label={false} />
+          {'types' in hit.metadata && <DatasetTypes hit={hit} label={false} />}
           <DownloadViewDetails
             hit={hit}
             session={session}

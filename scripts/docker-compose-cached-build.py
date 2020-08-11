@@ -10,16 +10,19 @@ getting rebuilt for every CI job.
 
 import os
 import subprocess
+import sys
 import yaml
 
 
-def main():
+def main(services):
     with open('docker-compose.yml') as fp:
-        config = yaml.load(fp)
+        config = yaml.safe_load(fp)
 
     version = os.environ['DATAMART_VERSION']
 
     for name, svc in config['services'].items():
+        if services and name not in services:
+            continue
         if 'image' not in svc:
             build = svc['build']
             image = '%s_%s' % (
@@ -40,4 +43,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

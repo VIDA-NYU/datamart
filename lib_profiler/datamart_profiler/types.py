@@ -1,3 +1,5 @@
+# Column types
+
 #: No data (whole column is missing)
 MISSING_DATA = 'https://metadata.datadrivendiscovery.org/types/MissingData'
 
@@ -39,3 +41,11 @@ GEO_POINT = 'http://schema.org/GeoCoordinates'
 
 #: A geographic shape described by its coordinates
 GEO_POLYGON = 'http://schema.org/GeoShape'
+
+
+# Dataset types
+
+DATASET_NUMERICAL = 'numerical'
+DATASET_CATEGORICAL = 'categorical'
+DATASET_SPATIAL = 'spatial'
+DATASET_TEMPORAL = 'temporal'

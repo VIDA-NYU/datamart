@@ -1,6 +1,6 @@
 ---
-kind: ConfigMap
 apiVersion: v1
+kind: ConfigMap
 metadata:
   name: monitoring
   labels:
@@ -188,8 +188,8 @@ spec:
   - protocol: TCP
     port: 9090
 ---
-kind: PersistentVolumeClaim
 apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
   name: prometheus
 spec:
@@ -233,7 +233,7 @@ spec:
           name: data
       containers:
       - name: prometheus
-        image: prom/prometheus
+        image: prom/prometheus:v2.19.3
         securityContext:
           runAsUser: 65534 # "nobody" as set in image
         ports:
@@ -269,8 +269,8 @@ spec:
     port: 3000
     nodePort: 30030
 ---
-kind: PersistentVolumeClaim
 apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
   name: grafana
 spec:
@@ -314,7 +314,7 @@ spec:
           name: data
       containers:
       - name: grafana
-        image: grafana/grafana
+        image: grafana/grafana:6.7.3
         securityContext:
           runAsUser: 472
         ports:

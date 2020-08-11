@@ -170,6 +170,7 @@ class TestProfiler(DataTestCase):
                                        "alternate index",
                         'source': 'remi',
                         'name': 'empty',
+                        'types': [],
                         'size': 28,
                         'nb_rows': 0,
                         'nb_profiled_rows': 0,
@@ -2356,6 +2357,7 @@ class TestUpload(DatamartTest):
                         time.sleep(2)
                     else:
                         self.fail("Dataset didn't make it to index")
+
                 self.assertJson(
                     record,
                     dict(
@@ -2702,6 +2704,7 @@ basic_metadata = {
     "name": "basic",
     "description": "This is a very simple CSV with people",
     'source': 'remi',
+    'types': ['categorical', 'numerical'],
     "size": 425,
     "nb_rows": 20,
     "nb_profiled_rows": 20,
@@ -2832,6 +2835,7 @@ agg_metadata = {
     "name": "agg",
     "description": "Simple CSV with ids and salaries to test aggregation for numerical attributes",
     'source': 'fernando',
+    'types': ['categorical', 'numerical'],
     "size": 110,
     "nb_rows": 8,
     "nb_profiled_rows": 8,
@@ -3006,6 +3010,7 @@ annotated_metadata = {
     "specialId": 12,
     "dept": "internal",
     "filename": "file",
+    "types": ['numerical', 'spatial'],
     "manual_annotations": annotated_annotations,
     "columns": [
         {
@@ -3105,6 +3110,7 @@ geo_metadata = {
     "name": "geo",
     "description": "Another simple CSV with places",
     'source': 'remi',
+    'types': ['numerical', 'spatial'],
     "size": 3910,
     "nb_rows": 100,
     "nb_profiled_rows": 100,
@@ -3231,6 +3237,7 @@ geo_wkt_metadata = {
     "name": "geo_wkt",
     "description": "Simple CSV in WKT format",
     'source': 'remi',
+    'types': ['numerical', 'spatial'],
     "size": 4708,
     "nb_rows": 100,
     "nb_profiled_rows": 100,
@@ -3297,6 +3304,7 @@ lazo_metadata = {
     "name": "lazo",
     "description": "Simple CSV with states and years to test the Lazo index service",
     'source': 'fernando',
+    'types': ['temporal'],
     "size": 334,
     "nb_rows": 36,
     "nb_profiled_rows": 36,
@@ -3356,6 +3364,7 @@ daily_metadata = {
     'name': 'daily',
     'description': 'Temporal dataset with daily resolution',
     'source': 'remi',
+    'types': ['categorical', 'temporal'],
     'size': 388,
     'nb_rows': 30,
     "nb_profiled_rows": 30,
@@ -3427,6 +3436,7 @@ hourly_metadata = {
     'name': 'hourly',
     'description': 'Temporal dataset with hourly resolution',
     'source': 'remi',
+    'types': ['categorical', 'temporal'],
     'size': 1242,
     'nb_rows': 52,
     "nb_profiled_rows": 52,
@@ -3501,6 +3511,7 @@ dates_pivoted_metadata = {
     'name': 'dates pivoted',
     'description': 'Temporal dataset but in columns',
     'source': 'remi',
+    'types': ['categorical', 'temporal'],
     'size': 525,
     'nb_rows': 24,
     'nb_profiled_rows': 24,
@@ -3565,6 +3576,7 @@ other_formats_metadata = lambda fmt: {
     'name': lambda v: isinstance(v, str),
     'description': lambda v: isinstance(v, str),
     'source': 'remi',
+    'types': ['numerical', 'temporal'],
     'size': 130,
     'nb_rows': 4,
     'nb_profiled_rows': 4,

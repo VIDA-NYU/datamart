@@ -3,7 +3,7 @@ import { SearchResult, InfoBoxType, Session } from '../../api/types';
 import { formatSize } from '../../utils';
 import {
   Description,
-  DataTypes,
+  DatasetTypes,
   DownloadButtons,
   DatasetColumns,
   SpatialCoverage,
@@ -44,7 +44,7 @@ function HitInfoBox(props: {
               <b>Source:</b> {hit.metadata.source}
             </div>
             <Description hit={hit} label={true} />
-            <DataTypes hit={hit} label={true} />
+            {'types' in hit.metadata && <DatasetTypes hit={hit} label={true} />}
             <DatasetColumns
               columns={hit.metadata.columns}
               maxLength={200}

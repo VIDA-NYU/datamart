@@ -12,7 +12,6 @@ import time
 import yaml
 
 from datamart_core.common import log_future
-from datamart_core import types
 
 
 logger = logging.getLogger(__name__)
@@ -105,13 +104,7 @@ class Coordinator(object):
         discovery['discovered'] = materialize.get('date', '???')
         discovery['profiled'] = metadata.get('date', '???')
         discovery['name'] = metadata.get('name')
-        if metadata.get('spatial_coverage', None):
-            discovery['spatial'] = True
-        if any(
-            types.DATE_TIME in c['semantic_types']
-            for c in metadata['columns']
-        ):
-            discovery['temporal'] = True
+        discovery['types'] = metadata.get('types')
         return discovery
 
     async def _amqp(self):

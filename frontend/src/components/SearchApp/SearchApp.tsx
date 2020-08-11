@@ -17,6 +17,7 @@ import { SourceFilter } from '../SourceFilter/SourceFilter';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { SearchState } from '../SearchResults/SearchState';
 import { SearchResults } from '../SearchResults/SearchResults';
+import { DatasetTypeFilter } from '../DatasetTypeFilter/DatasetTypeFilter';
 import {
   SearchResponse,
   FilterVariables,
@@ -72,6 +73,7 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
     const filterVariables = state.filters
       .filter(f => f.type !== FilterType.RELATED_FILE)
       .filter(f => f.type !== FilterType.SOURCE)
+      .filter(f => f.type !== FilterType.DATA_TYPE)
       .filter(f => f && f.state)
       .map(f => f.state as FilterVariables);
 
@@ -92,10 +94,15 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
       .filter(f => f.type === FilterType.SOURCE)
       .map(f => f.state as string[]);
 
+    const datasetTypes: string[][] = state.filters
+      .filter(f => f.type === FilterType.DATA_TYPE)
+      .map(f => f.state as string[]);
+
     const query: api.SearchQuery = {
       query: state.query,
       filters: filterVariables,
       sources: sources[0],
+      datasetTypes: datasetTypes[0],
       relatedFile: relatedFiles[0],
     };
     return query;
@@ -130,6 +137,14 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
         type: FilterType.SOURCE,
         hidden: false,
         state: query.sources,
+      });
+    }
+    if (query.datasetTypes) {
+      filters.push({
+        id: generateRandomId(),
+        type: FilterType.DATA_TYPE,
+        hidden: false,
+        state: query.datasetTypes,
       });
     }
     if (query.relatedFile) {
@@ -263,7 +278,8 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
     this.setState(prevState => {
       if (
         filterType === FilterType.RELATED_FILE ||
-        filterType === FilterType.SOURCE
+        filterType === FilterType.SOURCE ||
+        filterType === FilterType.DATA_TYPE
       ) {
         // Can only have one of those
         if (prevState.filters.filter(f => f.type === filterType).length > 0) {
@@ -412,6 +428,16 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
               />
             );
             break;
+          case FilterType.DATA_TYPE:
+            title = 'Data Type';
+            component = (
+              <DatasetTypeFilter
+                datasetTypes={api.DATASET_TYPES}
+                checkedDatasetTypes={filter.state as string[] | undefined}
+                onDatasetTypeChange={s => this.updateFilterState(filter.id, s)}
+              />
+            );
+            break;
           default:
             throw new Error(
               `Received not supported filter type=[${filter.type}]`
@@ -449,6 +475,10 @@ class SearchApp extends React.Component<SearchAppProps, SearchAppState> {
         case FilterType.SOURCE:
           title = 'Sources';
           icon = Icon.Database;
+          break;
+        case FilterType.DATA_TYPE:
+          title = 'Data Type';
+          icon = Icon.Type;
           break;
         default:
           throw new Error(

@@ -1,4 +1,4 @@
-FROM node:12-buster AS build
+FROM node:14-buster AS build
 
 RUN mkdir /src
 WORKDIR /src

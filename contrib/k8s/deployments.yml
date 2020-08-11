@@ -67,7 +67,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: redis
-        image: redis:5.0
+        image: redis:6.0
         securityContext:
           runAsUser: 999
         args: ["redis-server", "/usr/local/etc/redis/redis.conf"]

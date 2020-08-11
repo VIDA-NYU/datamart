@@ -988,6 +988,22 @@ def parse_keyword_query_main_index(query_json):
             }
         })
 
+    if 'types' in query_json:
+        dataset_types = query_json['types']
+        if not isinstance(dataset_types, list):
+            dataset_types = [dataset_types]
+        query_args_main.append({
+            'bool': {
+                'filter': [
+                    {
+                        'terms': {
+                            'types': dataset_types,
+                        }
+                    }
+                ]
+            }
+        })
+
     return query_args_main
 
 
@@ -1027,6 +1043,16 @@ def parse_keyword_query_sup_index(query_json):
             }
         })
 
+    if 'types' in query_json:
+        dataset_types = query_json['types']
+        if not isinstance(dataset_types, list):
+            dataset_types = [dataset_types]
+        query_sup_filters.append({
+            'terms': {
+                'dataset_types': dataset_types,
+            }
+        })
+
     return query_sup_functions, query_sup_filters
 
 
@@ -1035,7 +1061,6 @@ def parse_query(query_json, geo_data=None):
     over 'datamart' index as well as the supplementary indices
     ('datamart_columns' and 'datamart_spatial_coverage').
     """
-
     query_args_main = parse_keyword_query_main_index(query_json)
     query_sup_functions, query_sup_filters = \
         parse_keyword_query_sup_index(query_json)

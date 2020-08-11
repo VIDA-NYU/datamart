@@ -5,6 +5,7 @@ import {
   AugmentationInfo,
   ColumnAggregations,
   Session,
+  TemporalResolution,
 } from '../../api/types';
 import * as api from '../../api/rest';
 import { SearchQuery } from '../../api/rest';
@@ -22,6 +23,7 @@ interface AugmentationOptionsState {
   checked: {
     [id: string]: boolean;
   };
+  temporalResolution?: TemporalResolution;
   columnAggregations?: ColumnAggregations;
   result?: api.RequestStatus;
 }
@@ -46,19 +48,43 @@ function getAugmentationColumns(aug?: AugmentationInfo) {
   return columns;
 }
 
+function TemporalResolutionSelector(props: {
+  resolution: TemporalResolution;
+  onChange: (value: TemporalResolution) => void;
+}) {
+  return (
+    <select
+      value={props.resolution}
+      onChange={e => props.onChange(e.target.value as TemporalResolution)}
+    >
+      {Object.values(TemporalResolution).map(value => (
+        <option value={value} key={value}>
+          {value}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 class AugmentationOptions extends React.PureComponent<
   AugmentationOptionsProps,
   AugmentationOptionsState
 > {
   constructor(props: AugmentationOptionsProps) {
     super(props);
-    const initialState: AugmentationOptionsState = { checked: {} };
+    const initialState: AugmentationOptionsState = {
+      checked: {},
+      temporalResolution: props.hit.augmentation?.temporal_resolution,
+    };
     const columns = getAugmentationColumns(props.hit.augmentation);
     columns.forEach((c, index) => {
       initialState.checked[c.idx.toString()] = index === 0 ? true : false;
     });
     this.state = initialState;
     this.handleColumnSelectionChange = this.handleColumnSelectionChange.bind(
+      this
+    );
+    this.handleTemporalResolutionChange = this.handleTemporalResolutionChange.bind(
       this
     );
   }
@@ -80,7 +106,8 @@ class AugmentationOptions extends React.PureComponent<
   createAugmentationInfo(
     original: AugmentationInfo,
     checkedIndexes: number[],
-    columnAggregations?: ColumnAggregations
+    columnAggregations?: ColumnAggregations,
+    temporalResolution?: TemporalResolution
   ) {
     // make a copy of the original so we can modify it
     const augmentation = cloneObject(original);
@@ -101,6 +128,7 @@ class AugmentationOptions extends React.PureComponent<
     }
 
     augmentation.agg_functions = columnAggregations;
+    augmentation.temporal_resolution = temporalResolution;
 
     return augmentation;
   }
@@ -122,7 +150,8 @@ class AugmentationOptions extends React.PureComponent<
     task.augmentation = this.createAugmentationInfo(
       original,
       checkedIndexes,
-      this.state.columnAggregations
+      this.state.columnAggregations,
+      this.state.temporalResolution
     );
 
     console.log('submit', task);
@@ -229,6 +258,10 @@ class AugmentationOptions extends React.PureComponent<
     this.setState({ columnAggregations });
   }
 
+  handleTemporalResolutionChange(temporalResolution: TemporalResolution) {
+    this.setState({ temporalResolution });
+  }
+
   render() {
     const { hit } = this.props;
     if (!hit.augmentation || hit.augmentation.type === 'none') {
@@ -248,6 +281,17 @@ class AugmentationOptions extends React.PureComponent<
           <span style={{ textTransform: 'capitalize' }}>{type}</span> on:
         </b>
         {this.renderMergeColumns(columns, hit)}
+        {this.state.temporalResolution ? (
+          <>
+            <b>Temporal resolution:</b>
+            <TemporalResolutionSelector
+              resolution={this.state.temporalResolution}
+              onChange={this.handleTemporalResolutionChange}
+            />
+          </>
+        ) : (
+          undefined
+        )}
         <div>
           {hit.augmentation && hit.augmentation.type === 'join' && (
             <JoinColumnsSelector

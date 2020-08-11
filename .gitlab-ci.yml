@@ -28,7 +28,7 @@ test:
         python -m readme_renderer "$i" >/dev/null
       done
 
-    # Build base images, using the GitLab registry as a cache
+    # Build base image, using the GitLab registry as a cache
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
     - |
       # Pull the base image so we don't have to build from scratch
@@ -42,19 +42,6 @@ test:
       # Push the updated image to the registry (might be no-op)
       docker tag datamart_base $CI_REGISTRY_IMAGE/base
       docker push $CI_REGISTRY_IMAGE/base
-    - |
-      # Pull the base npm environment
-      docker pull $CI_REGISTRY_IMAGE/npm || true
-      # Update the base npm image (maybe)
-      chmod 644 frontend/package.json frontend/package-lock.json
-      touch -t 200001010000.00 frontend/package.json frontend/package-lock.json
-      docker build -t datamart_npm . \
-        --cache-from=$CI_REGISTRY_IMAGE/npm \
-        -f frontend/Dockerfile \
-        --target=build
-      # Push the updated image to the registry (might be no-op)
-      docker tag datamart_npm $CI_REGISTRY_IMAGE/npm
-      docker push $CI_REGISTRY_IMAGE/npm
 
     # Set up environment for testing
     - cp tests/ci.env .env
@@ -65,7 +52,7 @@ test:
     - chown 998 cov
 
     # Build images
-    - python scripts/docker-compose-cached-build.py
+    - python scripts/docker-compose-cached-build.py apiserver apilb coordinator profiler test-discoverer
     - docker-compose pull rabbitmq  # Don't build it
 
     # Bring services up
@@ -114,9 +101,6 @@ test:
     - docker-compose logs apiserver
     - docker-compose logs lazo
 
-    # Run the frontend tests
-    - docker run --rm datamart_npm sh -c "CI=true npm run test"
-
     # Generate coverage report
     - docker-compose down -t 30
     - ls -lA cov/
@@ -127,7 +111,7 @@ test:
       - htmlcov
     expire_in: 1 week
 
-style:
+python-style:
   stage: test
   before_script:
     - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && /root/.poetry/bin/poetry config virtualenvs.create false
@@ -135,6 +119,36 @@ style:
     - pip --disable-pip-version-check install --constraint reqs.txt flake8
   script:
     - flake8 --ignore=E731,W504,W503,E501
+
+frontend:
+  stage: test
+  services:
+    - docker:19.03.5-dind
+  before_script:
+    - curl -Lo /tmp/docker.tgz https://download.docker.com/linux/static/stable/x86_64/docker-19.03.5.tgz && tar -xf /tmp/docker.tgz -C /usr/local && rm /tmp/docker.tgz && export PATH=/usr/local/docker:$PATH && export DOCKER_HOST=tcp://docker:2375
+    - docker info
+    # Important note about this: the Docker server is on a separate host,
+    # so exposed ports are at 'docker' not 'localhost', and
+    # Docker containers can't reach the local runner!
+  script:
+    # Build base image, using the GitLab registry as a cache
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+    - |
+      # Pull the base npm environment
+      docker pull $CI_REGISTRY_IMAGE/npm || true
+      # Update the base npm image (maybe)
+      chmod 644 frontend/package.json frontend/package-lock.json
+      touch -t 200001010000.00 frontend/package.json frontend/package-lock.json
+      docker build -t datamart_npm . \
+        --cache-from=$CI_REGISTRY_IMAGE/npm \
+        -f frontend/Dockerfile \
+        --target=build
+      # Push the updated image to the registry (might be no-op)
+      docker tag datamart_npm $CI_REGISTRY_IMAGE/npm
+      docker push $CI_REGISTRY_IMAGE/npm
+
+    # Run the frontend tests
+    - docker run --rm datamart_npm sh -c "CI=true npm run test"
 
 pages:
   stage: deploy

@@ -51,6 +51,8 @@ function mergeJoinColumns(
     left_columns_names: leftColumnsNames,
     right_columns: rightColumns,
     right_columns_names: rightColumnsNames,
+    temporal_resolution:
+      auginfo1.temporal_resolution || auginfo2.temporal_resolution,
   };
 }
 

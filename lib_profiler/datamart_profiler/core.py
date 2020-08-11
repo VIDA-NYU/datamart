@@ -12,7 +12,7 @@ import random
 import warnings
 
 from .numerical import mean_stddev, get_numerical_ranges
-from .profile_types import identify_types
+from .profile_types import identify_types, determine_dataset_type
 from .spatial import nominatim_resolve_all, pair_latlong_columns, \
     get_spatial_ranges, parse_wkt_column
 from .temporal import get_temporal_resolution
@@ -166,6 +166,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
                 metadata['nb_rows'] = 0
                 metadata['nb_profiled_rows'] = 0
                 metadata['columns'] = []
+                metadata['types'] = []
                 return metadata
 
             logger.info("Dataframe loaded, %d rows, %d columns",
@@ -190,7 +191,11 @@ def process_dataset(data, dataset_id=None, metadata=None,
 
     if data.shape[0] == 0:
         logger.info("0 rows, returning early")
+        metadata['types'] = []
         return metadata
+
+    # Dataset types
+    dataset_types = set()
 
     # Lat / Long
     columns_lat = []
@@ -234,6 +239,12 @@ def process_dataset(data, dataset_id=None, metadata=None,
 
             structural_type, semantic_types_dict, additional_meta = \
                 identify_types(array, column_meta['name'], geo_data, manual)
+
+            # Identify a dataset type (numerical, categorial, spatial, or temporal)
+            dataset_type = determine_dataset_type(structural_type, semantic_types_dict)
+            if dataset_type:
+                dataset_types.add(dataset_type)
+
             # Set structural type
             column_meta['structural_type'] = structural_type
             # Add semantic types to the ones already present
@@ -590,7 +601,8 @@ def process_dataset(data, dataset_id=None, metadata=None,
 
         if spatial_coverage:
             metadata['spatial_coverage'] = spatial_coverage
-
+            if types.DATASET_SPATIAL not in dataset_types:
+                dataset_types.add(types.DATASET_SPATIAL)
     # Sample data
     if include_sample:
         rand = numpy.random.RandomState(RANDOM_SEED)
@@ -603,6 +615,8 @@ def process_dataset(data, dataset_id=None, metadata=None,
         sample = data.iloc[choose_rows]
         sample = sample.applymap(truncate_string)  # Truncate long values
         metadata['sample'] = sample.to_csv(index=False, line_terminator='\r\n')
+
+    metadata['types'] = sorted(dataset_types)
 
     # Return it -- it will be inserted into Elasticsearch, and published to the
     # feed and the waiting on-demand searches

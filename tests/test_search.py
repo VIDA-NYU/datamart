@@ -85,6 +85,88 @@ class TestSearch(unittest.TestCase):
         )
         self.assertEqual(vars, [])
 
+    def test_types(self):
+        main, sup_funcs, sup_filters, vars = parse_query({
+            'keywords': ['food'],
+            'types': ['spatial', 'temporal'],
+        })
+
+        self.assertEqual(
+            main,
+            [
+                {
+                    'bool': {
+                        'should': [
+                            {
+                                'multi_match': {
+                                    'query': 'food',
+                                    'operator': 'or',
+                                    'type': 'most_fields',
+                                    'fields': ['id^10', 'description', 'name'],
+                                },
+                            },
+                            {
+                                'nested': {
+                                    'path': 'columns',
+                                    'query': {
+                                        'multi_match': {
+                                            'query': 'food',
+                                            'operator': 'or',
+                                            'type': 'most_fields',
+                                            'fields': ['columns.name'],
+                                        },
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    'bool': {
+                        'filter': [
+                            {
+                                'terms': {
+                                    'types': ['spatial', 'temporal'],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        )
+        self.assertEqual(
+            sup_funcs,
+            [
+                {
+                    'filter': {
+                        'multi_match': {
+                            'query': 'food',
+                            'type': 'most_fields',
+                            'operator': 'or',
+                            'fields': [
+                                'dataset_id^10',
+                                'dataset_description',
+                                'dataset_name',
+                                'name',
+                            ],
+                        },
+                    },
+                    'weight': 10,
+                },
+            ],
+        )
+        self.assertEqual(
+            sup_filters,
+            [
+                {
+                    'terms': {
+                        'dataset_types': ['spatial', 'temporal'],
+                    },
+                },
+            ],
+        )
+        self.assertEqual(vars, [])
+
     def test_ranges(self):
         main, sup_funcs, sup_filters, vars = parse_query({
             'keywords': ['green', 'taxi'],

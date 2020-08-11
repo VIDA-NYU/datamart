@@ -25,6 +25,18 @@
           "type": "string",
           "description": "A random sample in CSV format"
         },
+        "types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "spatial",
+              "temporal",
+              "numerical",
+              "categorical"
+            ]
+          }
+        },
         "size": {
           "type": "integer",
           "description": "Size of the file in bytes"

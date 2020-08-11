@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import * as api from '../../api/rest';
-import { TemporalBadge, SpatialBadge, BadgeGroup } from '../Badges/Badges';
+import { DatasetTypeBadge, BadgeGroup } from '../Badges/Badges';
 import moment from 'moment';
 
 interface StatisticsState {
@@ -72,11 +72,8 @@ class Statistics extends React.PureComponent<{}, StatisticsState> {
                   </span>
                 </div>
               </div>
-              {(d.spatial || d.temporal) && (
-                <BadgeGroup>
-                  {d.spatial && <SpatialBadge />}
-                  {d.temporal && <TemporalBadge />}
-                </BadgeGroup>
+              {d.types && d.types.length > 0 && (
+                <BadgeGroup>{d.types.map(t => DatasetTypeBadge(t))}</BadgeGroup>
               )}
             </div>
           ))}
