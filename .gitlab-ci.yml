@@ -109,15 +109,15 @@ test:
     - docker-compose logs lazo
     - date
 
-    # Generate coverage report
-    - docker-compose down -t 30
-    - ls -lA cov/
-    - coverage combine -a cov/
-    - coverage html
-  artifacts:
-    paths:
-      - htmlcov
-    expire_in: 1 week
+  #   Generate coverage report
+  #  - docker-compose down -t 30
+  #  - ls -lA cov/
+  #  - coverage combine -a cov/
+  #  - coverage html
+  #artifacts:
+  #  paths:
+  #    - htmlcov
+  #  expire_in: 1 week
 
 python-style:
   stage: test
