@@ -25,11 +25,6 @@ test:
     - diff -u lib_core/datamart_core/types.py lib_materialize/datamart_materialize/types.py
     - /root/.poetry/bin/poetry install
     - date
-    - |
-      # Check READMEs
-      find . -name README.rst | while read i; do
-        python -m readme_renderer "$i" >/dev/null
-      done
 
     # Build base image, using the GitLab registry as a cache
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
@@ -129,8 +124,13 @@ python-style:
   before_script:
     - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && /root/.poetry/bin/poetry config virtualenvs.create false
     - /root/.poetry/bin/poetry export --dev --format requirements.txt >reqs.txt
-    - pip --disable-pip-version-check install --constraint reqs.txt flake8
+    - pip --disable-pip-version-check install --constraint reqs.txt flake8 readme_renderer
   script:
+    - |
+      # Check READMEs
+      find . -name README.rst | while read i; do
+        python -m readme_renderer "$i" >/dev/null
+      done
     - flake8 --ignore=E731,W504,W503,E501
 
 frontend:
