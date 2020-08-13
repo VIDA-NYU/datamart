@@ -88,8 +88,8 @@ test:
     - docker-compose up -d profiler apiserver apilb test-discoverer
     - |
       # Wait for profiling to end
-      slept=0; while [ $slept -le 180 -a $(curl -s -o /dev/null -w "%{http_code}" http://docker:9200/datamart/_doc/datamart.test.basic) != 200 ]; do sleep 5; slept=$((slept + 5)); done
-      if [ $slept -le 180 ]; then
+      slept=0; while [ $slept -le 240 -a $(curl -s -o /dev/null -w "%{http_code}" http://docker:9200/datamart/_doc/datamart.test.basic) != 200 ]; do sleep 5; slept=$((slept + 5)); done
+      if [ $slept -le 240 ]; then
         echo "Profiling ended after ${slept}s"
       else
         echo "Profiling didn't end after ${slept}s"
