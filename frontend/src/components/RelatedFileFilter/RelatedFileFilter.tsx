@@ -134,7 +134,7 @@ class RelatedFileFilter extends React.PureComponent<
                           Search with a dataset instead of text
                         </h6>
                         <span>
-                          We will find datasets that can be joined with your
+                          We will find datasets that can be augmented with your
                           dataset.
                           <br />
                           Click (or drag and drop a file) here to upload a CSV
