@@ -53,6 +53,8 @@ datamart:
       version:
         type: keyword
         index: false
+      attribute_keywords:
+        type: text
       # 'columns' is a nested field, we want
       # to query individual columns
       columns:
@@ -159,6 +161,8 @@ datamart_columns:
       dataset_version:
         type: keyword
         index: false
+      dataset_attribute_keywords:
+        type: text
       name:
         type: text
         # the following is needed for
@@ -232,6 +236,8 @@ datamart_spatial_coverage:
       dataset_version:
         type: keyword
         index: false
+      dataset_attribute_keywords:
+        type: text
       name:
         type: text
       # Keep in sync, search code for 279a32

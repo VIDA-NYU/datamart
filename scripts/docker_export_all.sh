@@ -1,4 +1,5 @@
 #!/bin/sh
+set -eu
 cd "$(dirname "$(dirname "$0")")"
 PROJ="$(basename "$(pwd)")"
 if [ -z "$1" ]; then

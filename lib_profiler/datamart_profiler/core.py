@@ -8,6 +8,7 @@ import os
 import pandas
 from pandas.errors import EmptyDataError
 import prometheus_client
+import string
 import random
 import warnings
 
@@ -63,6 +64,35 @@ def truncate_string(s, limit=140):
             return s[:limit - 3] + "..."
         else:
             return s[:space] + "..."
+
+
+DELIMITERS = set(string.punctuation) | set(string.whitespace)
+UPPER = set(string.ascii_uppercase)
+LOWER = set(string.ascii_lowercase)
+
+
+def expand_attribute_name(name):
+    name = name.replace('_', ' ').replace('-', ' ')
+
+    word = []
+    for c in name:
+        if c in DELIMITERS:
+            if word:
+                yield ''.join(word)
+                word = []
+            continue
+
+        if word:
+            if (
+                (word[-1] in string.digits) != (c in string.digits)
+                or (word[-1] in LOWER and c in UPPER)
+            ):
+                yield ''.join(word)
+                word = []
+
+        word.append(c)
+
+    yield ''.join(word)
 
 
 @PROM_PROFILE.time()
@@ -603,6 +633,16 @@ def process_dataset(data, dataset_id=None, metadata=None,
             metadata['spatial_coverage'] = spatial_coverage
             if types.DATASET_SPATIAL not in dataset_types:
                 dataset_types.add(types.DATASET_SPATIAL)
+
+    # Attribute names
+    attribute_keywords = []
+    for col in columns:
+        attribute_keywords.append(col['name'])
+        kw = list(expand_attribute_name(col['name']))
+        if kw != [col['name']]:
+            attribute_keywords.extend(kw)
+    metadata['attribute_keywords'] = attribute_keywords
+
     # Sample data
     if include_sample:
         rand = numpy.random.RandomState(RANDOM_SEED)

@@ -8,6 +8,7 @@ import textwrap
 
 from datamart_geo import GeoData
 from datamart_profiler import process_dataset
+from datamart_profiler.core import expand_attribute_name
 from datamart_profiler import profile_types
 from datamart_profiler import spatial
 from datamart_profiler.spatial import LATITUDE, LONGITUDE
@@ -53,6 +54,19 @@ def check_plot(kind):
         return plot['type'] == kind
 
     return check
+
+
+class TestNames(unittest.TestCase):
+    def test_names(self):
+        """Test expanding column names."""
+        self.assertEqual(
+            list(expand_attribute_name('Apt221bBakerStreet')),
+            ['Apt', '221', 'b', 'Baker', 'Street'],
+        )
+        self.assertEqual(
+            list(expand_attribute_name('place')),
+            ['place'],
+        )
 
 
 class TestLatlongSelection(DataTestCase):
@@ -210,6 +224,7 @@ class TestDates(DataTestCase):
                 'nb_rows': 3,
                 'nb_profiled_rows': 3,
                 'types': ['numerical', 'temporal'],
+                'attribute_keywords': ['year', 'number'],
                 'columns': [
                     {
                         'name': 'year',
@@ -517,6 +532,7 @@ class TestNominatim(DataTestCase):
                 'nb_rows': 3,
                 'nb_profiled_rows': 3,
                 'types': ['spatial'],
+                'attribute_keywords': ['place', 'loc'],
                 'columns': [
                     {
                         'name': 'place',
@@ -612,6 +628,7 @@ class TestGeo(DataTestCase):
                 'nb_rows': 5,
                 'nb_profiled_rows': 5,
                 'types': ['spatial'],
+                'attribute_keywords': ['zero', 'one'],
                 'columns': [
                     {
                         'name': 'zero',

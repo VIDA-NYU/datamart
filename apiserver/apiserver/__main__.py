@@ -1,4 +1,4 @@
-from apiserver.web import main
+from apiserver.main import main
 
 
 if __name__ == '__main__':

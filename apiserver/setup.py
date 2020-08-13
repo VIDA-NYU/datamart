@@ -23,7 +23,7 @@ setup(name='datamart-api-service',
       packages=['apiserver'],
       entry_points={
           'console_scripts': [
-              'datamart-apiserver = apiserver.web:main']},
+              'datamart-apiserver = apiserver.main:main']},
       install_requires=req,
       description="API service of Datamart",
       author="Remi Rampin",

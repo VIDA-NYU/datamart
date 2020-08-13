@@ -2696,7 +2696,7 @@ class TestLocation(DatamartTest):
 
 
 version = os.environ['DATAMART_VERSION']
-assert re.match(r'^v[0-9]+(\.[0-9]+)+(-[0-9]+-g[0-9a-f]{7})?$', version)
+assert re.match(r'^v[0-9]+(\.[0-9]+)+(-[0-9]+-g[0-9a-f]{7,8})?$', version)
 
 
 basic_metadata = {
@@ -2708,6 +2708,7 @@ basic_metadata = {
     "size": 425,
     "nb_rows": 20,
     "nb_profiled_rows": 20,
+    "attribute_keywords": ["name", "country", "number", "what"],
     "columns": [
         {
             "name": "name",
@@ -2839,6 +2840,7 @@ agg_metadata = {
     "size": 110,
     "nb_rows": 8,
     "nb_profiled_rows": 8,
+    "attribute_keywords": ["id", "work", "salary"],
     "columns": [
         {
             "name": "id",
@@ -3012,6 +3014,8 @@ annotated_metadata = {
     "filename": "file",
     "types": ['numerical', 'spatial'],
     "manual_annotations": annotated_annotations,
+    "attribute_keywords": ["id", "lt_coord", "lt", "coord",
+                           "lg_coord", "lg", "coord", "height", "stmo"],
     "columns": [
         {
             "name": "id",
@@ -3109,11 +3113,12 @@ geo_metadata = {
     "id": "datamart.test.geo",
     "name": "geo",
     "description": "Another simple CSV with places",
-    'source': 'remi',
+    "source": "remi",
     'types': ['numerical', 'spatial'],
     "size": 3910,
     "nb_rows": 100,
     "nb_profiled_rows": 100,
+    "attribute_keywords": ["id", "lat", "long", "height"],
     "columns": [
         {
             "name": "id",
@@ -3241,6 +3246,7 @@ geo_wkt_metadata = {
     "size": 4708,
     "nb_rows": 100,
     "nb_profiled_rows": 100,
+    "attribute_keywords": ["id", "coords", "height"],
     "columns": [
         {
             "name": "id",
@@ -3308,6 +3314,7 @@ lazo_metadata = {
     "size": 334,
     "nb_rows": 36,
     "nb_profiled_rows": 36,
+    "attribute_keywords": ["state", "year"],
     "columns": [
         {
             "name": "state",
@@ -3368,6 +3375,7 @@ daily_metadata = {
     'size': 388,
     'nb_rows': 30,
     "nb_profiled_rows": 30,
+    "attribute_keywords": ["aug_date", "aug", "date", "rain"],
     'columns': [
         {
             'name': 'aug_date',
@@ -3439,7 +3447,8 @@ hourly_metadata = {
     'types': ['categorical', 'temporal'],
     'size': 1242,
     'nb_rows': 52,
-    "nb_profiled_rows": 52,
+    'nb_profiled_rows': 52,
+    'attribute_keywords': ['aug_date', 'aug', 'date', 'rain'],
     'columns': [
         {
             'name': 'aug_date',
@@ -3515,6 +3524,7 @@ dates_pivoted_metadata = {
     'size': 525,
     'nb_rows': 24,
     'nb_profiled_rows': 24,
+    'attribute_keywords': ['country', 'date', 'value'],
     'columns': [
         {
             'name': 'country',
@@ -3580,6 +3590,7 @@ other_formats_metadata = lambda fmt: {
     'size': 130,
     'nb_rows': 4,
     'nb_profiled_rows': 4,
+    'attribute_keywords': ['name', 'age', 'date'],
     'columns': [
         {
             'name': 'name',
