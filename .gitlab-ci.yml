@@ -15,7 +15,6 @@ test:
     - docker info
     - curl -Lo /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)"
     - chmod +x /usr/local/bin/docker-compose
-    - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && /root/.poetry/bin/poetry config virtualenvs.create false
     # Important note about this: the Docker server is on a separate host,
     # so exposed ports are at 'docker' not 'localhost', and
     # Docker containers can't reach the local runner!
@@ -23,7 +22,6 @@ test:
     - date
     - diff -u lib_core/datamart_core/types.py lib_profiler/datamart_profiler/types.py
     - diff -u lib_core/datamart_core/types.py lib_materialize/datamart_materialize/types.py
-    - /root/.poetry/bin/poetry install
     - date
 
     # Build base image, using the GitLab registry as a cache
@@ -101,10 +99,10 @@ test:
     - docker-compose ps
     - docker-compose logs profiler
 
-    # Run the tests
+    # Run the tests in the coordinator container
     - |
       # Run tests
-      if ! python -Wd -m coverage run --branch tests/__main__.py; then docker-compose logs apiserver; docker-compose logs lazo; exit 1; fi
+      if ! docker exec datamart_coordinator_1 python -Wd -m coverage run --branch tests/__main__.py; then docker-compose logs apiserver; docker-compose logs lazo; exit 1; fi
     - docker-compose logs apiserver
     - docker-compose logs lazo
     - date
