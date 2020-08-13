@@ -136,7 +136,6 @@ services:
       - 8003:8003
     volumes:
       # CI: - ./cov:/cov
-      # CI: - ./tests:/usr/src/app/tests
       - ./volumes/datasets:/datasets
       - ./volumes/cache:/cache
   profiler:
