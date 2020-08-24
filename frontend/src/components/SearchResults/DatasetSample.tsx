@@ -327,10 +327,8 @@ function Table(props: TableProps) {
   return (
     <table {...getTableProps()} className="table table-hover small">
       {typeView === tableViews.COLUMN ? (
-        // Column View
         <TableColumnView headerGroups={headerGroups} hit={hit} />
       ) : (
-        // Compact or Detail View
         <TableCompactDetailView tableProps={props} />
       )}
     </table>
@@ -384,7 +382,7 @@ class DatasetSample extends React.PureComponent<
               }`}
               onClick={() => this.updateTypeView(tableViews.COMPACT)}
             >
-              Compact view
+              Compact View
             </button>
             <button
               type="button"
@@ -393,7 +391,7 @@ class DatasetSample extends React.PureComponent<
               }`}
               onClick={() => this.updateTypeView(tableViews.DETAIL)}
             >
-              Detail view
+              Detail View
             </button>
             <button
               type="button"
@@ -402,7 +400,7 @@ class DatasetSample extends React.PureComponent<
               }`}
               onClick={() => this.updateTypeView(tableViews.COLUMN)}
             >
-              Column view
+              Column View
             </button>
           </div>
           <div className="mt-2">
