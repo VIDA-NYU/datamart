@@ -4,6 +4,12 @@ import 'react-datepicker/dist/react-datepicker.css';
 import './DateFilter.css';
 import {TemporalResolution, TemporalVariable} from '../../api/types';
 
+const ANY_RESOLUTION = 'Any Resolution';
+
+function capitalize(word: string) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 interface DateFilterProps {
   className?: string;
   state?: TemporalVariable;
@@ -38,7 +44,7 @@ class DateFilter extends React.PureComponent<DateFilterProps> {
     this.props.onDateFilterChange({
       type: 'temporal_variable',
       ...this.props.state,
-      granularity,
+      granularity: granularity !== ANY_RESOLUTION ? granularity : undefined,
     });
   }
 
@@ -51,6 +57,7 @@ class DateFilter extends React.PureComponent<DateFilterProps> {
   }
 
   render() {
+    const resolutions = [ANY_RESOLUTION, ...Object.values(TemporalResolution)];
     return (
       <div
         className={`input-group${
@@ -78,10 +85,11 @@ class DateFilter extends React.PureComponent<DateFilterProps> {
             style={{width: 'auto'}}
             value={this.props.state?.granularity}
             onChange={e => this.onGranularityChange(e.target.value)}
+            defaultValue={ANY_RESOLUTION}
           >
-            {Object.values(TemporalResolution).map(value => (
+            {resolutions.map(value => (
               <option value={value} key={value}>
-                {value}
+                {capitalize(value)}
               </option>
             ))}
           </select>
