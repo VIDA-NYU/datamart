@@ -4,7 +4,7 @@ import './Badges.css';
 import {IconAbc} from './IconAbc';
 import {ColumnMetadata} from '../../api/types';
 
-export enum BagdeButton {
+export enum BadgeButton {
   ADD = 'ADD',
   REMOVE = 'REMOVE',
 }
@@ -110,7 +110,7 @@ export function ColumnBadge(props: {
   column: ColumnMetadata;
   type?: 'categorical' | 'numerical';
   function?: string;
-  cornerButton?: BagdeButton;
+  cornerButton?: BadgeButton;
   onClick?: () => void;
 }) {
   let label = props.column.name;
@@ -126,7 +126,7 @@ export function ColumnBadge(props: {
     <span className={`badge badge-pill ${badgeClass}`}>
       <BadgeIcon className="feather-xs-w" />
       {label}
-      {props.cornerButton === BagdeButton.ADD && (
+      {props.cornerButton === BadgeButton.ADD && (
         <button
           type="button"
           title="Add this column"
@@ -136,7 +136,7 @@ export function ColumnBadge(props: {
           <Icon.PlusCircle size={cornerButtonSize} />
         </button>
       )}
-      {props.cornerButton === BagdeButton.REMOVE && (
+      {props.cornerButton === BadgeButton.REMOVE && (
         <button
           type="button"
           title="Remove this column"
