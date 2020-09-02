@@ -103,7 +103,7 @@ test:
     # Run the tests in the coordinator container
     - |
       # Run tests
-      if ! docker run --env-file .env -v $(pwd)/tests:/usr/src/app/tests -v $(pwd)/docs:/usr/src/app/docs --network datamart_default datamart_apiserver python -Wd -m coverage run --branch tests/__main__.py; then docker-compose logs apiserver; docker-compose logs lazo; exit 1; fi
+      if ! docker run --env-file .env -v $(pwd)/tests:/usr/src/app/tests -v $(pwd)/docs:/usr/src/app/docs -v $(pwd)/coordinator:/usr/src/app/coordinator --network datamart_default datamart_apiserver python -Wd -m coverage run --branch tests/__main__.py; then docker-compose logs apiserver; docker-compose logs lazo; exit 1; fi
     - docker-compose logs apiserver
     - docker-compose logs lazo
     - date

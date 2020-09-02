@@ -213,8 +213,7 @@ class TestProfiler(DataTestCase):
         )
         response.raise_for_status()
         actual = response.json()
-        with pkg_resources.resource_stream(
-                'coordinator', 'elasticsearch.yml') as stream:
+        with open('/usr/src/app/coordinator/coordinator/elasticsearch.yml') as stream:
             expected = yaml.safe_load(stream)
         expected.pop('_refs', None)
 
