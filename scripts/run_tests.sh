@@ -29,11 +29,14 @@ docker-compose up -d --force-recreate test-discoverer
 
 # Wait for profiling to end
 (set +x
-slept=0; while [ $slept -le 180 -a $(curl -s -o /dev/null -w "%{http_code}" http://localhost:9200/datamart/_doc/datamart.test.basic) != 200 ]; do sleep 1; slept=$((slept + 1)); done
-if [ $slept -gt 180 ]; then
-  echo "Profiling didn't end after ${slept}s"
-  exit 1
-fi
+slept=0
+while [ $(curl -s -o /dev/null -w "%{http_code}" http://localhost:9200/datamart/_doc/datamart.test.basic) != 200 ]; do
+  if [ $slept -gt 180 ]; then
+    echo "Profiling didn't end after ${slept}s"
+    exit 1
+  fi
+  sleep 1; slept=$((slept + 1))
+done
 )
 
 # Load .env
