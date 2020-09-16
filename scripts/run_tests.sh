@@ -29,8 +29,9 @@ docker-compose up -d --force-recreate test-discoverer
 
 # Wait for profiling to end
 (set +x
-slept=0
-while [ $(curl -s -o /dev/null -w "%{http_code}" http://localhost:9200/datamart/_doc/datamart.test.basic) != 200 ]; do
+slept=10
+sleep 10
+while [ $(curl -s http://localhost:8080/api/metrics | sed -n '/^rabbitmq_queue_messages{.*queue="profile".* \([0-9]*\)$/s//\1/p') != 0 ]; do
   if [ $slept -gt 180 ]; then
     echo "Profiling didn't end after ${slept}s"
     exit 1
