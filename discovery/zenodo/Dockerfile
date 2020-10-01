@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.8
 
 ENV TINI_VERSION v0.18.0
 RUN curl -Lo /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini && \
