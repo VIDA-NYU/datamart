@@ -5,6 +5,7 @@ import json
 import prometheus_client
 
 from datamart_core.materialize import get_dataset
+from datamart_core.objectstore import get_object_store
 from datamart_core.prom import PromMeasureRequest
 
 from .base import BUCKETS, BaseHandler
@@ -62,6 +63,23 @@ class BaseDownload(BaseHandler):
             # Redirect the client to it
             logger.info("Sending redirect to direct_url")
             return self.redirect(materialize['direct_url'])
+
+        # If it's in object storage
+        if (
+            not session_id
+            and format == 'csv'
+            and not materialize.get('convert')
+        ):
+            object_store = get_object_store()
+            with contextlib.ExitStack() as stack:
+                try:
+                    dataset = stack.enter_context(
+                        object_store.open('datasets', dataset_id)
+                    )
+                except FileNotFoundError:
+                    pass
+                else:
+                    return self.redirect(object_store.file_url(dataset))
 
         with contextlib.ExitStack() as stack:
             try:

@@ -17,6 +17,7 @@ from datamart_materialize.tsv import tsv_to_csv
 from datamart_profiler import parse_date
 
 from .discovery import encode_dataset_id
+from .objectstore import get_object_store
 
 
 logger = logging.getLogger(__name__)
@@ -83,36 +84,46 @@ def get_dataset(metadata, dataset_id, format='csv', format_options=None):
         dataset_id, metadata.get('size', 'unknown'),
     )
 
+    object_store = get_object_store()
+
     # To limit the number of downloads, we always materialize the CSV file, and
     # convert it to the requested format if necessary. This avoids downloading
     # the CSV again just because we want a different format
 
     # Context to lock the CSV
-    dataset_lock = contextlib.ExitStack()
-    with dataset_lock:
-        # Try to read from persistent storage
-        shared = os.path.join('/datasets', encode_dataset_id(dataset_id))
-        if os.path.exists(shared):
-            logger.info("Reading from /datasets")
-            csv_path = os.path.join(shared, 'main.csv')
-        else:
-            # Otherwise, materialize the CSV
-            def create_csv(cache_temp):
-                logger.info("Materializing CSV...")
-                with PROM_DOWNLOAD.time():
-                    datamart_materialize.download(
-                        {'id': dataset_id, 'metadata': metadata},
-                        cache_temp, None,
-                        format='csv',
-                        size_limit=10000000000,  # 10 GB
+    with contextlib.ExitStack() as dataset_lock:
+        def create_csv(cache_temp):
+            # Try to read from persistent storage
+            with contextlib.ExitStack() as s3_stack:
+                try:
+                    csv_file = s3_stack.enter_context(
+                        object_store.open('datasets', encode_dataset_id(dataset_id))
                     )
+                except FileNotFoundError:
+                    pass
+                else:
+                    logger.info("Reading from datasets bucket")
+                    with open(cache_temp, 'wb') as fp:
+                        shutil.copyfileobj(csv_file, fp)
 
-            csv_key = dataset_cache_key(dataset_id, metadata, 'csv', {})
-            csv_path = dataset_lock.enter_context(
-                cache_get_or_set(
-                    '/cache/datasets', csv_key, create_csv,
+                    return
+
+            # Otherwise, materialize the CSV
+            logger.info("Materializing CSV...")
+            with PROM_DOWNLOAD.time():
+                datamart_materialize.download(
+                    {'id': dataset_id, 'metadata': metadata},
+                    cache_temp, None,
+                    format='csv',
+                    size_limit=10000000000,  # 10 GB
                 )
+
+        csv_key = dataset_cache_key(dataset_id, metadata, 'csv', {})
+        csv_path = dataset_lock.enter_context(
+            cache_get_or_set(
+                '/cache/datasets', csv_key, create_csv,
             )
+        )
 
         # If CSV was requested, send it
         if format == 'csv':

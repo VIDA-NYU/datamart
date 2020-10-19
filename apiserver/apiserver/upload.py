@@ -1,12 +1,12 @@
+import asyncio
 from datetime import datetime
 import json
 import logging
-import os
 import prometheus_client
-import shutil
 import uuid
 
 from datamart_core.common import json2msg
+from datamart_core.objectstore import get_object_store
 from datamart_core.prom import PromMeasureRequest
 
 from .base import BUCKETS, BaseHandler
@@ -76,14 +76,10 @@ class Upload(BaseHandler):
             dataset_id = 'datamart.upload.%s' % uuid.uuid4().hex
 
             # Write file to shared storage
-            dataset_dir = os.path.join('/datasets', dataset_id)
-            os.mkdir(dataset_dir)
-            try:
-                with open(os.path.join(dataset_dir, 'main.csv'), 'wb') as fp:
-                    fp.write(file.body)
-            except BaseException:
-                shutil.rmtree(dataset_dir)
-                raise
+            object_store = get_object_store()
+            with object_store.open('datasets', dataset_id, 'wb') as fp:
+                fp.write(file.body)
+            await asyncio.sleep(3)  # Object store is eventually consistent
         elif self.get_body_argument('address', None):
             # Check the URL
             address = self.get_body_argument('address')

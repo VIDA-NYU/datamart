@@ -6,12 +6,11 @@ import elasticsearch
 import lazo_index_service
 import logging
 import os
-import shutil
-import tempfile
 import uuid
 
 from .common import block_run, log_future, json2msg, msg2json, \
     encode_dataset_id, delete_dataset_from_index
+from .objectstore import get_object_store
 
 
 logger = logging.getLogger(__name__)
@@ -232,23 +231,10 @@ class Discoverer(object):
         won't occur for datasets that are in shared storage already.
         """
         # TODO: Add a mechanism to clean datasets from storage
-        dir_name = encode_dataset_id(self.identifier + '.' + dataset_id)
-        dataset_dir = os.path.join('/datasets', dir_name)
-        if os.path.exists(dataset_dir):
-            shutil.rmtree(dataset_dir)
-        temp_dir = tempfile.mkdtemp(prefix=dir_name, dir='/datasets')
-        try:
-            with open(os.path.join(temp_dir, 'main.csv'), 'wb') as fp:
-                yield fp
-        except BaseException:
-            shutil.rmtree(temp_dir)
-            raise
-        else:
-            try:
-                os.rename(temp_dir, dataset_dir)
-            except OSError:
-                # Dataset was written concurrently
-                shutil.rmtree(temp_dir)
+        object_store = get_object_store()
+        key = encode_dataset_id(self.identifier + '.' + dataset_id)
+        with object_store.open('datasets', key, 'wb') as fp:
+            yield fp
 
     def delete_dataset(self, *, full_id=None, dataset_id=None):
         """Delete a dataset that is no longer present in the source.
@@ -266,9 +252,8 @@ class Discoverer(object):
         )
 
         # And the stored datasets
-        dirname = os.path.join('/datasets', encode_dataset_id(full_id))
-        if os.path.exists(dirname):
-            shutil.rmtree(dirname)
+        object_store = get_object_store()
+        object_store.delete('datasets', encode_dataset_id(full_id))
 
 
 class AsyncDiscoverer(Discoverer):
