@@ -66,7 +66,7 @@ Start the base containers
 -------------------------
 
 ```
-$ docker-compose up -d elasticsearch rabbitmq redis lazo
+$ docker-compose up -d elasticsearch rabbitmq redis minio lazo
 ```
 
 These will take a few seconds to get up and running. Then you can start the other components:
@@ -88,6 +88,7 @@ Ports:
 * The Lazo server is at http://localhost:8030
 * The RabbitMQ management interface is at http://localhost:8010
 * The RabbitMQ metrics are at http://localhost:8012
+* The Minio interface is at http://localhost:8050 (if you use that)
 * The HAProxy statistics are at http://localhost:8004
 * Prometheus is at http://localhost:8040
 * Grafana is at http://localhost:8041
