@@ -9,6 +9,8 @@ req = [
     'aio-pika',
     'elasticsearch~=7.0',
     'lazo-index-service==0.5.1',
+    's3fs',
+    'gcsfs',
     'prometheus_client',
     'prometheus_async',
     'sentry-sdk',
