@@ -17,8 +17,9 @@ class TestDiscoverer(Discoverer):
     """
     def main_loop(self):
         # Put this one on disk
-        with self.write_to_shared_storage('geo') as dirname:
-            shutil.copy2('geo.csv', os.path.join(dirname, 'main.csv'))
+        with open('geo.csv', 'rb') as src:
+            with self.write_to_shared_storage('geo') as dst:
+                shutil.copyfileobj(src, dst)
         self.record_dataset(
             dict(),
             {
@@ -41,8 +42,9 @@ class TestDiscoverer(Discoverer):
         )
 
         # Put this one on disk
-        with self.write_to_shared_storage('agg') as dirname:
-            shutil.copy2('agg.csv', os.path.join(dirname, 'main.csv'))
+        with open('agg.csv', 'rb') as src:
+            with self.write_to_shared_storage('agg') as dst:
+                shutil.copyfileobj(src, dst)
         self.record_dataset(
             dict(),
             {
@@ -78,8 +80,9 @@ class TestDiscoverer(Discoverer):
         )
 
         # Put this one on disk
-        with self.write_to_shared_storage('daily') as dirname:
-            shutil.copy2('daily.csv', os.path.join(dirname, 'main.csv'))
+        with open('daily.csv', 'rb') as src:
+            with self.write_to_shared_storage('daily') as dst:
+                shutil.copyfileobj(src, dst)
         self.record_dataset(
             dict(),
             {

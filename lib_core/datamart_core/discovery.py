@@ -238,7 +238,8 @@ class Discoverer(object):
             shutil.rmtree(dataset_dir)
         temp_dir = tempfile.mkdtemp(prefix=dir_name, dir='/datasets')
         try:
-            yield temp_dir
+            with open(os.path.join(temp_dir, 'main.csv'), 'wb') as fp:
+                yield fp
         except BaseException:
             shutil.rmtree(temp_dir)
             raise

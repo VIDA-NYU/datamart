@@ -175,7 +175,7 @@ class UazIndicatorsDiscoverer(Discoverer):
 
         with self.write_to_shared_storage(dataset_id) as tmp:
             df.to_csv(
-                os.path.join(tmp, 'main.csv'),
+                tmp,
                 index=False,
                 line_terminator='\r\n',
             )
