@@ -1037,7 +1037,12 @@ class TestDownload(DatamartTest):
         # Geo dataset, materialized via /datasets storage
         response = self.datamart_get('/download/' + 'datamart.test.geo',
                                      # format defaults to csv
-                                     allow_redirects=False)
+                                     allow_redirects=True)
+        self.assertEqual(len(response.history), 1)
+        self.assertEqual(response.history[0].status_code, 302)
+        self.assertTrue(response.history[0].headers['Location'].startswith(
+            os.environ['S3_CLIENT_URL'] + '/dev-datasets/datamart.test.geo'
+        ))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['Content-Type'],
                          'application/octet-stream')
@@ -1106,7 +1111,7 @@ class TestDownload(DatamartTest):
         geo_meta = geo_meta.json()['metadata']
 
         response = self.datamart_post(
-            '/download', allow_redirects=False,
+            '/download', allow_redirects=True,
             # format defaults to csv
             files={
                 'task': json.dumps({
@@ -1116,6 +1121,11 @@ class TestDownload(DatamartTest):
                 }).encode('utf-8'),
             },
         )
+        self.assertEqual(len(response.history), 1)
+        self.assertEqual(response.history[0].status_code, 302)
+        self.assertTrue(response.history[0].headers['Location'].startswith(
+            os.environ['S3_CLIENT_URL'] + '/dev-datasets/datamart.test.geo'
+        ))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['Content-Type'],
                          'application/octet-stream')
