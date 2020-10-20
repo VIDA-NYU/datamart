@@ -70,14 +70,48 @@ class BaseHandler(tornado.web.RequestHandler):
 
     http_client = AsyncHTTPClient(defaults=dict(user_agent="Datamart"))
 
+    def get_current_user(self):
+        return self.get_secure_cookie('user')
+
     @property
     def coordinator(self):
         return self.application.coordinator
 
 
 class Index(BaseHandler):
+    @tornado.web.authenticated
     def get(self):
         self.render('index.html')
+
+
+class Login(BaseHandler):
+    def get(self):
+        if self.current_user:
+            return self._go_to_next()
+        else:
+            return self.render(
+                'login.html',
+                next=self.get_argument('next', ''),
+            )
+
+    def post(self):
+        password = self.get_body_argument('password')
+        if password == self.application.admin_password:
+            logger.info("Admin logged in")
+            self.set_secure_cookie('user', 'admin')
+            return self._go_to_next()
+        else:
+            self.render(
+                'login.html',
+                next=self.get_argument('next', ''),
+                error="Invalid password",
+            )
+
+    def _go_to_next(self):
+        next_ = self.get_argument('next', '')
+        if not next_:
+            next_ = self.reverse_url('index')
+        return self.redirect(next_)
 
 
 class Statistics(BaseHandler):
@@ -103,6 +137,7 @@ class Application(tornado.web.Application):
 
         self.elasticsearch = es
         self.coordinator = Coordinator(self.elasticsearch)
+        self.admin_password = os.environ['ADMIN_PASSWORD']
 
 
 def make_app(debug=False):
@@ -144,9 +179,12 @@ def make_app(debug=False):
         [
             URLSpec('/api/statistics', Statistics),
             URLSpec('/', Index, name='index'),
+            URLSpec('/login', Login, name='login'),
         ],
         static_path=pkg_resources.resource_filename('coordinator',
                                                     'static'),
+        login_url='/login',
+        xsrf_cookies=True,
         debug=debug,
         cookie_secret=secret,
         es=es,
