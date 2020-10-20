@@ -34,38 +34,6 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: datasets
-  labels:
-    type: local
-    app: datamart
-    what: datasets
-spec:
-  capacity:
-    storage: 5Gi
-  accessModes:
-  - ReadWriteMany
-  hostPath:
-    path: "/var/lib/datamart/prod/datasets"
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: datasets
-spec:
-  storageClassName: ""
-  selector:
-    matchLabels:
-      app: datamart
-      what: datasets
-  accessModes:
-  - ReadWriteMany
-  resources:
-    requests:
-      storage: 5Gi
----
-kind: PersistentVolume
-apiVersion: v1
-metadata:
   name: cache
   labels:
     type: local

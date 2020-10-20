@@ -64,10 +64,3 @@ spec:
           value: lazo
         - name: LAZO_SERVER_PORT
           value: "50051"
-        volumeMounts:
-        - mountPath: /datasets
-          name: datasets
-      volumes:
-      - name: datasets
-        persistentVolumeClaim:
-          claimName: datasets

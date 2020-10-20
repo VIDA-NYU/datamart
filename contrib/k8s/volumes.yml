@@ -16,22 +16,6 @@ spec:
   hostPath:
     path: "/var/lib/datamart/prod/datasets"
 ---
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: datasets
-spec:
-  selector:
-    matchLabels:
-      app: datamart
-      what: datasets
-  storageClassName: "manual"
-  accessModes:
-  - ReadWriteMany
-  resources:
-    requests:
-      storage: 5Gi
----
 kind: PersistentVolume
 apiVersion: v1
 metadata:
