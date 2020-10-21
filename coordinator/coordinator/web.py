@@ -81,7 +81,10 @@ class BaseHandler(tornado.web.RequestHandler):
 class Index(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.render('index.html')
+        return self.render(
+            'index.html',
+            recent_uploads=self.coordinator.recent_uploads,
+        )
 
 
 class Login(BaseHandler):
