@@ -16,3 +16,8 @@ data:
     maxmemory 500mb
     maxmemory-policy allkeys-lru
   max_cache_bytes: "50000000000"  # 50 GB
+  s3.url: ""
+  s3.client_url: ""
+  s3.bucket_prefix: "datamart-dev-"
+  gcs.project: "datamart"
+  gcs.bucket_prefix: "datamart-dev-"
