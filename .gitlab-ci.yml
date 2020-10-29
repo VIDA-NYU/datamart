@@ -60,17 +60,6 @@ test:
     - docker-compose pull rabbitmq  # Don't build it
 
     # Bring services up
-    - |
-      patch -p1 <<'END'
-      --- a/docker-compose.yml
-      +++ b/docker-compose.yml
-      @@ -7,4 +7,4 @@ services:
-             - cluster.name=docker-cluster
-             - bootstrap.memory_lock=true
-      -      - ES_HEAP_SIZE=4g
-      +      - ES_HEAP_SIZE=256m
-           ulimits:
-      END
     - scripts/setup.sh
     - docker-compose up -d elasticsearch rabbitmq redis
     - |
