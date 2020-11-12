@@ -37,6 +37,9 @@ def get_temporal_resolution(values):
     """Returns the resolution of the temporal attribute.
     """
 
+    if not isinstance(values, set):
+        values = set(values)
+
     # Python 3.7+ iterates on dict in insertion order
     for resolution, key in temporal_aggregation_keys.items():
         counts = collections.defaultdict(collections.Counter)
