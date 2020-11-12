@@ -441,6 +441,34 @@ class TestTemporalResolutions(unittest.TestCase):
             ]),
             'quarter',
         )
+        self.assertEqual(
+            get_res([
+                '2020-01-14T05:12:41',
+                '2020-01-14T05:12:41',
+            ]),
+            'second',
+        )
+        self.assertEqual(
+            get_res([
+                '2020-01-14T05:12:00',
+                '2020-01-14T05:12:00',
+            ]),
+            'minute',
+        )
+        self.assertEqual(
+            get_res([
+                '2020-01-14T00:00:00',
+                '2020-01-14T00:00:00',
+            ]),
+            'day',
+        )
+        self.assertEqual(
+            get_res([
+                '2020-12',
+                '2020-12',
+            ]),
+            'day',
+        )
 
 
 class TestTypes(unittest.TestCase):

@@ -40,6 +40,17 @@ def get_temporal_resolution(values):
     if not isinstance(values, set):
         values = set(values)
 
+    if len(values) == 1:
+        value, = values
+        if value.second:
+            return 'second'
+        elif value.minute:
+            return 'minute'
+        elif value.hour:
+            return 'hour'
+        else:
+            return 'day'
+
     # Python 3.7+ iterates on dict in insertion order
     for resolution, key in temporal_aggregation_keys.items():
         counts = collections.defaultdict(collections.Counter)
