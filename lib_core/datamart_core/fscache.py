@@ -243,11 +243,16 @@ def cache_get_or_set(cache_dir, key, create_function, cache_invalid=False):
                         return
                     # Entry was removed while we waited -- we'll try creating
 
-        # Whether we do it below or conflict, entry will have been re-created
-        cache_invalid = False
-
         with FSLockExclusive(lock_path):
-            if os.path.exists(entry_path):
+            if cache_invalid:
+                # Remove the cache that's invalid
+                if os.path.isdir(entry_path):
+                    shutil.rmtree(entry_path)
+                elif os.path.isfile(entry_path):
+                    os.remove(entry_path)
+
+                cache_invalid = False
+            elif os.path.exists(entry_path):
                 # Cache was created while we waited
                 # We can't downgrade to a shared lock, so restart
                 continue
