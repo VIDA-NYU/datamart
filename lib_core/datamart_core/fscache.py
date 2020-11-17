@@ -251,33 +251,32 @@ def cache_get_or_set(cache_dir, key, create_function, cache_invalid=False):
                 # Cache was created while we waited
                 # We can't downgrade to a shared lock, so restart
                 continue
-            else:
-                # Remote temporary file
+
+            # Remove temporary file
+            if os.path.isdir(temp_path):
+                shutil.rmtree(temp_path)
+            elif os.path.isfile(temp_path):
+                os.remove(temp_path)
+
+            try:
+                if not metric_set:
+                    metric_set = True
+                    PROM_CACHE_MISSES.labels(cache_dir).inc(1)
+                # Cache doesn't exist and we have it locked -- create
+                create_function(temp_path)
+            except BaseException:
+                # Creation failed, clean up before unlocking!
                 if os.path.isdir(temp_path):
                     shutil.rmtree(temp_path)
                 elif os.path.isfile(temp_path):
                     os.remove(temp_path)
+                os.remove(lock_path)
+                raise
+            else:
+                # Rename it to destination
+                os.rename(temp_path, entry_path)
 
-                try:
-                    if not metric_set:
-                        metric_set = True
-                        PROM_CACHE_MISSES.labels(cache_dir).inc(1)
-                    # Cache doesn't exist and we have it locked -- create
-                    create_function(temp_path)
-                except BaseException:
-                    # Creation failed, clean up before unlocking!
-                    if os.path.isdir(temp_path):
-                        shutil.rmtree(temp_path)
-                    elif os.path.isfile(temp_path):
-                        os.remove(temp_path)
-                    os.remove(lock_path)
-                    raise
-                else:
-                    # Rename it to destination
-                    os.rename(temp_path, entry_path)
-
-                # We can't downgrade to a shared lock, so restart
-                continue
+            # We can't downgrade to a shared lock, so restart
 
 
 @contextlib.contextmanager
