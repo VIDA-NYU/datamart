@@ -104,6 +104,7 @@ class ProfilePostedData(tornado.web.RequestHandler):
                 logger.info("Profiled in %.2fs", time.perf_counter() - start)
 
                 data_profile['materialize'] = materialize
+                data_profile['version'] = os.environ['DATAMART_VERSION']
 
                 self.application.redis.set(
                     'profile:' + data_hash,
@@ -165,7 +166,6 @@ class Profile(BaseHandler, GracefulHandler, ProfilePostedData):
                     if data_profile:
                         return self.send_json(dict(
                             json.loads(data_profile),
-                            version=os.environ['DATAMART_VERSION'],
                             token=data_hash,
                         ))
                     else:
