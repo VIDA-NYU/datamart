@@ -737,7 +737,7 @@ class TestGeo(DataTestCase):
     def setUpClass(cls):
         cls.geo_data = datamart_geo.GeoData.from_local_cache()
 
-    def test_profile(self):
+    def test_admin(self):
         with data('admins.csv', 'r') as data_fp:
             metadata = process_dataset(
                 data_fp,
@@ -821,7 +821,7 @@ class TestGeo(DataTestCase):
             },
         )
 
-    def test_ambiguous(self):
+    def test_admin_ambiguous(self):
         def countries(areas):
             if areas and isinstance(areas[0], (list, set)):
                 # Flatten
@@ -864,6 +864,114 @@ class TestGeo(DataTestCase):
             {'United States'},
         )
         self.assertEqual(level, 1)
+
+    def test_point_wkt(self):
+        with data('geo_wkt.csv', 'r') as data_fp:
+            metadata = process_dataset(
+                data_fp,
+                coverage=True,
+            )
+
+        self.assertJson(
+            metadata,
+            {
+                'types': ['numerical', 'spatial'],
+                "size": 4708,
+                "nb_rows": 100,
+                "nb_profiled_rows": 100,
+                "nb_columns": 3,
+                "nb_spatial_columns": 1,
+                "nb_numerical_columns": 1,
+                "average_row_size": lambda n: round(n, 2) == 47.08,
+                "attribute_keywords": ["id", "coords", "height"],
+                "columns": [
+                    {
+                        "name": "id",
+                        "structural_type": "http://schema.org/Text",
+                        "semantic_types": [],
+                        "missing_values_ratio": 0.01,
+                        "num_distinct_values": 99
+                    },
+                    {
+                        "name": "coords",
+                        "structural_type": "http://schema.org/GeoCoordinates",
+                        "semantic_types": [],
+                        "unclean_values_ratio": 0.0,
+                    },
+                    {
+                        "name": "height",
+                        "structural_type": "http://schema.org/Float",
+                        "semantic_types": [],
+                        "unclean_values_ratio": 0.0,
+                        "mean": lambda n: round(n, 3) == 47.827,
+                        "stddev": lambda n: round(n, 2) == 21.28,
+                        "coverage": check_ranges(1.0, 90.0),
+                    }
+                ],
+                "spatial_coverage": [
+                    {
+                        "type": "point",
+                        "column_names": ["coords"],
+                        "column_indexes": [1],
+                        "ranges": check_geo_ranges(-74.006, 40.6905, -73.983, 40.7352)
+                    }
+                ],
+            },
+        )
+
+    def test_point_latlong(self):
+        with data('geo_latlong.csv', 'r') as data_fp:
+            metadata = process_dataset(
+                data_fp,
+                coverage=True,
+            )
+
+        self.assertJson(
+            metadata,
+            {
+                'types': ['numerical', 'spatial'],
+                "size": 4408,
+                "nb_rows": 100,
+                "nb_profiled_rows": 100,
+                "nb_columns": 3,
+                "nb_spatial_columns": 1,
+                "nb_numerical_columns": 1,
+                "average_row_size": lambda n: round(n, 2) == 44.08,
+                "attribute_keywords": ["id", "coords", "height"],
+                "columns": [
+                    {
+                        "name": "id",
+                        "structural_type": "http://schema.org/Text",
+                        "semantic_types": [],
+                        "missing_values_ratio": 0.01,
+                        "num_distinct_values": 99
+                    },
+                    {
+                        "name": "coords",
+                        "structural_type": "http://schema.org/GeoCoordinates_LatLong",
+                        "semantic_types": [],
+                        "unclean_values_ratio": 0.0,
+                    },
+                    {
+                        "name": "height",
+                        "structural_type": "http://schema.org/Float",
+                        "semantic_types": [],
+                        "unclean_values_ratio": 0.0,
+                        "mean": lambda n: round(n, 3) == 47.827,
+                        "stddev": lambda n: round(n, 2) == 21.28,
+                        "coverage": check_ranges(1.0, 90.0),
+                    }
+                ],
+                "spatial_coverage": [
+                    {
+                        "type": "point_latlong",
+                        "column_names": ["coords"],
+                        "column_indexes": [1],
+                        "ranges": check_geo_ranges(-74.006, 40.6905, -73.983, 40.7352)
+                    }
+                ],
+            },
+        )
 
 
 class TestMedianDist(unittest.TestCase):
