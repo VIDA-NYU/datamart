@@ -36,8 +36,11 @@ ID = 'http://schema.org/identifier'
 #: Categorical values, i.e. drawn from a limited number of options
 CATEGORICAL = 'http://schema.org/Enumeration'
 
-#: A geographic location (latitude+longitude coordinates)
+#: A geographic location (longitude+latitude coordinates, in that order)
 GEO_POINT = 'http://schema.org/GeoCoordinates'
+
+#: A geographic location (latitude+longitude coordinates, in that order)
+GEO_POINT_LATLONG = 'http://schema.org/GeoCoordinates_LatLong'
 
 #: A geographic shape described by its coordinates
 GEO_POLYGON = 'http://schema.org/GeoShape'

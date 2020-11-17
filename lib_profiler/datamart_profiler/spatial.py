@@ -178,7 +178,7 @@ _re_loc = re.compile(
 )
 
 
-def _parse_point(value):
+def _parse_point(value, latlong):
     m = _re_loc.search(value)
     if m is not None:
         try:
@@ -186,15 +186,21 @@ def _parse_point(value):
             y = float(m.group(2))
         except ValueError:
             return None
+        if latlong:
+            x, y = y, x
         if -180.0 < x < 180.0 and -90.0 < y < 90.0:
             return y, x
 
 
-def parse_wkt_column(values):
-    """Parse a pandas.Series of points in WKT format into lat/long pairs.
+def parse_wkt_column(values, latlong=False):
+    """Parse a pandas.Series of points in WKT format or similar "(long, lat)".
+
+    :param latlong: If False (the default), read ``(long, lat)`` format. If
+        True, read ``(lat, long)``.
+    :returns: A list of ``(lat, long)`` pairs
     """
     # Parse points
-    values = values.apply(_parse_point)
+    values = values.apply(_parse_point, latlong=latlong)
     # Drop NaN values
     values = values.dropna(axis=0)
 

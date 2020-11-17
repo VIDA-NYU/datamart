@@ -237,7 +237,10 @@ class GeoSpatialCoverageMap extends PersistentComponent<
           </span>
         </>
       );
-    } else if (type === 'point' && column_names.length === 1) {
+    } else if (
+      (type === 'point' || type === 'point_latlong') &&
+      column_names.length === 1
+    ) {
       return (
         <>
           <b>Point Column: </b>

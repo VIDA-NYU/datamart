@@ -46,7 +46,14 @@ _re_geo_combined = regex.compile(
     r'\)$'
 )
 _re_other_point = re.compile(
-    r'^(POINT ?)?\('
+    r'^POINT ?\('
+    r'-?[0-9]{1,3}\.[0-9]{1,15}'
+    r', ?'
+    r'-?[0-9]{1,3}\.[0-9]{1,15}'
+    r'\)$'
+)
+_re_latlong_point = re.compile(
+    r'^\('
     r'-?[0-9]{1,3}\.[0-9]{1,15}'
     r', ?'
     r'-?[0-9]{1,3}\.[0-9]{1,15}'
@@ -87,6 +94,8 @@ def regular_exp_count(array):
             re_count['geo_combined'] += 1
         elif _re_other_point.match(elem):
             re_count['other_point'] += 1
+        elif _re_latlong_point.match(elem):
+            re_count['latlong_point'] += 1
         elif _re_wkt_polygon.match(elem):
             re_count['polygon'] += 1
         elif len(_re_whitespace.findall(elem)) >= TEXT_WORDS - 1:
@@ -112,6 +121,9 @@ def unclean_values_ratio(c_type, re_count, num_total):
     if c_type == types.GEO_POINT:
         ratio = \
             (num_total - re_count['empty'] - re_count['point'] - re_count['geo_combined'] - re_count['other_point']) / num_total
+    if c_type == types.GEO_POINT_LATLONG:
+        ratio = \
+            (num_total - re_count['empty'] - re_count['latlong_point']) / num_total
     if c_type == types.GEO_POLYGON:
         ratio = \
             (num_total - re_count['empty'] - re_count['polygon']) / num_total
@@ -143,6 +155,8 @@ def identify_structural_type(re_count, num_total, threshold):
         structural_type = types.FLOAT
     elif re_count['point'] >= threshold or re_count['geo_combined'] >= threshold or re_count['other_point'] >= threshold:
         structural_type = types.GEO_POINT
+    elif re_count['latlong_point'] >= threshold:
+        structural_type = types.GEO_POINT_LATLONG
     elif re_count['polygon'] >= threshold:
         structural_type = types.GEO_POLYGON
     else:
@@ -318,7 +332,7 @@ def identify_types(array, name, geo_data, manual=None):
 
 
 SPATIAL_STRUCTURAL_TYPES = {
-    types.GEO_POINT, types.GEO_POLYGON,
+    types.GEO_POINT, types.GEO_POINT_LATLONG, types.GEO_POLYGON,
 }
 SPATIAL_SEMANTIC_TYPES = {
     types.LATITUDE, types.LONGITUDE,

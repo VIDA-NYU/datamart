@@ -750,10 +750,17 @@ def process_dataset(data, dataset_id=None, metadata=None,
 
             # Compute ranges from WKT points
             for i, col in enumerate(columns):
-                if col['structural_type'] != types.GEO_POINT:
+                if col['structural_type'] == types.GEO_POINT:
+                    latlong = False
+                elif col['structural_type'] == types.GEO_POINT_LATLONG:
+                    latlong = True
+                else:
                     continue
                 name = col['name']
-                values = parse_wkt_column(data.iloc[:, i])
+                values = parse_wkt_column(
+                    data.iloc[:, i],
+                    latlong=latlong,
+                )
                 logger.info(
                     "Computing spatial ranges point=%r (%d rows)",
                     name, len(values),
@@ -761,7 +768,7 @@ def process_dataset(data, dataset_id=None, metadata=None,
                 spatial_ranges = get_spatial_ranges(values)
                 if spatial_ranges:
                     spatial_coverage.append({
-                        'type': 'point',
+                        'type': 'point_latlong' if latlong else 'point',
                         'column_names': [name],
                         'column_indexes': [i],
                         'ranges': spatial_ranges,
