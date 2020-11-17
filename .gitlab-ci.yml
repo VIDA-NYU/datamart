@@ -95,7 +95,7 @@ test:
     # Run the tests
     - |
       # Run tests
-      if ! python -Wd -m coverage run --branch tests/__main__.py; then docker-compose logs apiserver; docker-compose logs lazo; exit 1; fi
+      if ! python -Wd -m coverage run --branch tests/__main__.py --verbose; then docker-compose logs apiserver; docker-compose logs lazo; exit 1; fi
     - docker-compose logs apiserver
     - docker-compose logs lazo
 

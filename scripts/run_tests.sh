@@ -51,4 +51,4 @@ set -x
 export DATAMART_VERSION=v0.0
 
 # Run tests
-poetry run python tests
+poetry run python tests --verbose --catch
