@@ -2,8 +2,8 @@ import codecs
 import collections
 import contextlib
 import csv
-import time
 from datetime import datetime
+import itertools
 import langid
 import logging
 import numpy
@@ -12,6 +12,7 @@ import pandas
 from pandas.errors import EmptyDataError
 import prometheus_client
 import string
+import time
 import random
 import re
 import warnings
@@ -33,6 +34,13 @@ MAX_SIZE = 50000000  # 50 MB
 SAMPLE_ROWS = 20
 
 MAX_UNCLEAN_ADDRESSES = 0.20  # 20%
+
+
+#: Maximum number of rows to discard at the top of the file
+HEADER_MAX_GARBAGE = 6
+
+#: Stop throwing out lines when that many in a row have same number of columns
+HEADER_CONSISTENT_ROWS = 4
 
 
 BUCKETS = [
@@ -116,6 +124,48 @@ def _lazo_retry(func):
     return func()
 
 
+def read_header(file):
+    """Skip non-data information from CSV and read column names.
+    """
+    # Check whether this is a binary file
+    read_sample = file.read(4)
+    binary = not isinstance(read_sample, str)
+    file.seek(0, 0)
+
+    # Decode CSV
+    if binary:
+        codec_reader = codecs.getreader('utf-8')(file)
+        reader = csv.reader(codec_reader)
+    else:
+        reader = csv.reader(file)
+
+    # Read rows until the number of items stabilizes
+    run_header = []
+    run_start = 0
+    run_cols = None
+    run_len = 0
+    for i, row in enumerate(itertools.islice(reader, HEADER_MAX_GARBAGE + HEADER_CONSISTENT_ROWS)):
+        if i >= HEADER_MAX_GARBAGE + HEADER_CONSISTENT_ROWS:
+            raise ValueError("Can't find consistent CSV data in file")
+        if len(row) == run_cols:
+            # Number of columns matches with run
+            run_len += 1
+            if run_len == HEADER_CONSISTENT_ROWS:
+                # 4 rows with the same size, assume we're good
+                file.seek(0, 0)
+                return run_header, run_start
+        else:
+            # Number of columns doesn't match, start new run
+            run_header = row
+            run_start = i
+            run_cols = len(row)
+            run_len = 1
+
+    # Reached the end of the file
+    file.seek(0, 0)
+    return run_header, run_start
+
+
 def load_data(data, load_max_size=None):
     if not load_max_size:
         load_max_size = MAX_SIZE
@@ -164,33 +214,21 @@ def load_data(data, load_max_size=None):
                                 "a pandas.DataFrame")
 
             # Read column names
-            read_sample = data.read(4)
-            data.seek(0, 0)
-            if isinstance(read_sample, str):
-                reader = csv.reader(data)
-                try:
-                    column_names = next(reader)
-                except StopIteration:
-                    column_names = None
-                del reader
-            else:
-                codec_reader = codecs.getreader('utf-8')(data)
-                reader = csv.reader(codec_reader)
-                try:
-                    column_names = next(reader)
-                except StopIteration:
-                    column_names = None
-                del reader
-                del codec_reader
-            data.seek(0, 0)
+            column_names, skiprows = read_header(data)
+
+            if skiprows:
+                metadata['skip_rows'] = skiprows
 
             # Load the data
             if metadata['size'] > load_max_size:
                 logger.info("Counting rows...")
+                for _ in itertools.islice(data, skiprows):
+                    pass
+                skipped_size = data.tell()
                 metadata['nb_rows'] = sum(1 for _ in data)
                 if metadata['nb_rows'] > 0:
                     metadata['average_row_size'] = (
-                        metadata['size'] / metadata['nb_rows']
+                        (metadata['size'] - skipped_size) / metadata['nb_rows']
                     )
                 data.seek(0, 0)
 
@@ -201,11 +239,24 @@ def load_data(data, load_max_size=None):
                 data = pandas.read_csv(
                     data,
                     dtype=str, na_filter=False,
-                    skiprows=lambda i: i != 0 and rand.random() > ratio)
+                    skiprows=lambda i: (
+                        # Skip the first `skiprows`
+                        i < skiprows
+                        or (
+                            # Include the header
+                            i != skiprows
+                            # Randomly sample the rest
+                            and rand.random() > ratio
+                        )
+                    ),
+                )
             else:
                 logger.info("Loading dataframe...")
-                data = pandas.read_csv(data,
-                                       dtype=str, na_filter=False)
+                data = pandas.read_csv(
+                    data,
+                    dtype=str, na_filter=False,
+                    skiprows=skiprows,
+                )
 
                 metadata['nb_rows'] = data.shape[0]
                 if metadata['nb_rows'] > 0:
