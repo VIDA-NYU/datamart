@@ -3469,6 +3469,7 @@ geo_wkt_metadata = {
     'source': 'remi',
     'types': ['numerical', 'spatial'],
     "size": 4708,
+    "skip_rows": 4,
     "nb_rows": 100,
     "nb_profiled_rows": 100,
     "nb_columns": 3,

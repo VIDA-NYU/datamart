@@ -882,7 +882,8 @@ class TestGeo(DataTestCase):
             metadata,
             {
                 'types': ['numerical', 'spatial'],
-                "size": 4708,
+                "size": 4850,
+                "skip_rows": 4,
                 "nb_rows": 100,
                 "nb_profiled_rows": 100,
                 "nb_columns": 3,
