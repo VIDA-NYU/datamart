@@ -16,7 +16,7 @@
     "@types/react-router-dom": "^5.1.3",
     "@types/react-table": "^7.0.10",
     "@types/styled-components": "^5.0.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "moment": "^2.24.0",
     "ol": "^5.3.3",
     "react": "^16.13.1",
