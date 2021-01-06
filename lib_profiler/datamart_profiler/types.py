@@ -30,6 +30,9 @@ ADDRESS = 'http://schema.org/address'
 #: A named administrative area, such as a country, state, or city
 ADMIN = 'http://schema.org/AdministrativeArea'
 
+#: A URL
+URL = 'http://schema.org/URL'
+
 #: An identifier
 ID = 'http://schema.org/identifier'
 

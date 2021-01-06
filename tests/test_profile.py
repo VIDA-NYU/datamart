@@ -550,6 +550,24 @@ class TestTypes(unittest.TestCase):
         )
         self.assertFalse(profile_types._re_float.match(''))
 
+    def test_urls(self):
+        """Test the URL type detection"""
+        positive = '''\
+        http://en.wikipedia.org/wiki/Data_mart
+        https://auctus.vida-nyu.org/
+        ftp://docs.auctus.vida-nyu.org/master/
+        '''
+        negative = '''\
+        auctus.vida-nyu.org
+        auctus
+        data.mart
+        '''
+        self.do_test(
+            profile_types._re_url.match,
+            positive, negative,
+        )
+        self.assertFalse(profile_types._re_url.match(''))
+
     def test_geo_combined(self):
         """Test the "combined" geo point type detection"""
         positive = '''\
