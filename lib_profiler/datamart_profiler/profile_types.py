@@ -28,7 +28,8 @@ _re_url = re.compile(
     r'''[a-zA-Z0-9$@.+,;!*~'()\[\]:/?&=#%_-]+$'''
 )
 _re_file = re.compile(
-    '(?:^[CD]:\\\\)'  # Windows
+    '(?:^file://)'  # URI format
+    '|(?:^[CD]:\\\\)'  # Windows
     '|(?:^/(?:'
     'Applications|Library|System|Users|Volumes'  # MacOS
     '|bin|boot|dev|etc|home|lib|opt|proc|root|run|sbin|srv|usr|var|tmp'  # UNIX

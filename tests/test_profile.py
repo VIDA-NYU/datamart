@@ -578,6 +578,7 @@ class TestTypes(unittest.TestCase):
         /Library/Frameworks/Python.framework/Versions/3.7/bin/python3.7
         C:\\Program Files\\ReproUnzip
         C:\\Python3.7\\python.exe
+        file:////tmp/pipelines.sqlite3
         '''
         negative = '''\
         /nan/
