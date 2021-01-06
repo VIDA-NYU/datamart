@@ -27,6 +27,13 @@ _re_url = re.compile(
     r'^(?:(?:http|https|ftp)://|www\.)'
     r'''[a-zA-Z0-9$@.+,;!*~'()\[\]:/?&=#%_-]+$'''
 )
+_re_file = re.compile(
+    '(?:^[CD]:\\\\)'  # Windows
+    '|(?:^/(?:'
+    'Applications|Library|System|Users|Volumes'  # MacOS
+    '|bin|boot|dev|etc|home|lib|opt|proc|root|run|sbin|srv|usr|var|tmp'  # UNIX
+    ')/)'
+)
 _re_wkt_point = re.compile(
     r'^POINT ?\('
     r'-?[0-9]{1,3}\.[0-9]{1,15}'
@@ -95,6 +102,8 @@ def regular_exp_count(array):
             re_count['float'] += 1
         elif _re_url.match(elem):
             re_count['url'] += 1
+        elif _re_file.match(elem):
+            re_count['file'] += 1
         elif _re_wkt_point.match(elem):
             re_count['point'] += 1
         elif _re_geo_combined.match(elem):
@@ -228,6 +237,7 @@ def identify_types(array, name, geo_data, manual=None):
         num_bool = re_count['bool']
         num_text = re_count['text']
         num_url = re_count['url']
+        num_file = re_count['file']
         num_empty = re_count['empty']
 
         # Identify booleans
@@ -242,6 +252,10 @@ def identify_types(array, name, geo_data, manual=None):
             # URLs
             if num_url >= threshold:
                 semantic_types_dict[types.URL] = None
+
+            # File paths
+            if num_file >= threshold:
+                semantic_types_dict[types.FILE_PATH] = None
 
             # Administrative areas
             if geo_data is not None and len(distinct_values()) >= 3:

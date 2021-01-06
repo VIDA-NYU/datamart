@@ -568,6 +568,28 @@ class TestTypes(unittest.TestCase):
         )
         self.assertFalse(profile_types._re_url.match(''))
 
+    def test_filenames(self):
+        """Test the file path type detection"""
+        positive = '''\
+        /home/remram/projects/auctus/auctus/tests
+        /var/mail/fchirigati
+        /Applications/VIDA/Auctus.app
+        /opt/reprounzip
+        /Library/Frameworks/Python.framework/Versions/3.7/bin/python3.7
+        C:\\Program Files\\ReproUnzip
+        C:\\Python3.7\\python.exe
+        '''
+        negative = '''\
+        /nan/
+        C: answer C
+        D: obiwan kenobi
+        '''
+        self.do_test(
+            profile_types._re_file.match,
+            positive, negative,
+        )
+        self.assertFalse(profile_types._re_file.match(''))
+
     def test_geo_combined(self):
         """Test the "combined" geo point type detection"""
         positive = '''\
