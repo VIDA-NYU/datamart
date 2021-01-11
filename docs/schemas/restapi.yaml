@@ -1,23 +1,22 @@
 openapi: 3.0.1
 info:
-  title: "Datamart"
+  title: "Auctus"
   description: "REST API for Datamart."
   contact:
     email: "remi.rampin@nyu.edu"
   license:
     name: "MIT"
-    url: "https://gitlab.com/datadrivendiscovery/datamart-api/blob/master/LICENSE.txt"
-  version: "0.3"
+  version: "1"
 externalDocs:
-  description: "Datamart API documentation"
-  url: "https://datadrivendiscovery.gitlab.io/datamart-api/"
+  description: "Auctus documentation (including the web UI and the Python libraries)"
+  url: "https://docs.auctus.vida-nyu.org/"
 servers:
 - url: "https://auctus.vida-nyu.org/api/v1"
 tags:
 - name: "query"
   description: "Searching the index for datasets"
 - name: "augment"
-  description: "Using the Datamart to perform server-side augmentation"
+  description: "Using Auctus to perform server-side augmentation"
 - name: "ingest"
   description: "Adding new datasets to the index"
 paths:
