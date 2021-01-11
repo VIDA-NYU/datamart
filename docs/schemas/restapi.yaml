@@ -30,17 +30,17 @@ externalDocs:
 servers:
 - url: "https://auctus.vida-nyu.org/api/v1"
 tags:
-- name: "query"
+- name: "Query"
   description: "Searching the index for datasets"
-- name: "augment"
+- name: "Augment"
   description: "Using Auctus to perform server-side augmentation"
-- name: "ingest"
+- name: "Ingest"
   description: "Adding new datasets to the index"
 paths:
   /upload:
     post:
       tags:
-      - "ingest"
+      - "Ingest"
       summary: "Add a dataset to the index"
       operationId: "upload"
       requestBody:
@@ -94,7 +94,7 @@ paths:
   /search:
     post:
       tags:
-      - "query"
+      - "Query"
       summary: "Search the index for datasets"
       operationId: "search"
       parameters:
@@ -190,7 +190,7 @@ paths:
   /profile:
     post:
       tags:
-      - "query"
+      - "Query"
       summary: Profile a dataset
       description: |
         The JSON object returned by this endpoint can be passed to /search as the 'data_profile'.
@@ -227,7 +227,7 @@ paths:
   /download/{dataset_id}:
     get:
       tags:
-      - "query"
+      - "Query"
       summary: "Download a full dataset by its ID"
       operationId: "download_id"
       parameters:
@@ -253,7 +253,7 @@ paths:
   /download:
     post:
       tags:
-      - "query"
+      - "Query"
       summary: "Download a dataset from a search result"
       operationId: "download"
       parameters:
@@ -329,7 +329,7 @@ paths:
   /augment:
     post:
       tags:
-      - "augment"
+      - "Augment"
       summary: "Augment an input dataset with a selected search result"
       operationId: "augment"
       requestBody:
