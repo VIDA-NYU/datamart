@@ -154,6 +154,25 @@ k8s_configs:
   script:
     - kubeval --strict contrib/k8s/*.yml
 
+pages-test:
+  stage: test
+  before_script:
+    - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python - --version 1.1.4 && /root/.poetry/bin/poetry config virtualenvs.create false
+  script:
+    - /root/.poetry/bin/poetry install
+    - (cd docs/ && make html)
+    - cp -r docs/_build/html pages
+
+    - mkdir pages/redoc
+    - curl -Lo pages/redoc/redoc.js https://cdn.jsdelivr.net/npm/redoc@2.0.0-rc.45/bundles/redoc.standalone.js
+    - cp -r docs/schemas pages/redoc/schemas
+    - cp docs/redoc/index.html pages/redoc/index.html
+  artifacts:
+    paths:
+      - pages
+  except:
+    - master
+
 pages:
   stage: deploy
   before_script:
@@ -162,11 +181,11 @@ pages:
     - /root/.poetry/bin/poetry install
     - (cd docs/ && make html)
     - cp -r docs/_build/html public
-    - curl -Lo swagger-dist.tar.gz https://github.com/swagger-api/swagger-ui/archive/v3.23.0.tar.gz
-    - (mkdir public/swagger && cd public/swagger && tar xf ../../swagger-dist.tar.gz swagger-ui-3.23.0/dist --strip-components=2)
-    - python3 -c 'import json,yaml; json.dump(yaml.load(open("docs/schemas/restapi.yaml")), open("public/swagger/restapi.json", "w"))'
-    - cp docs/schemas/query_input_schema.json docs/schemas/query_result_schema.json public/swagger/
-    - sed -i 's|https://petstore.swagger.io/v2/swagger.json|./restapi.json|g' public/swagger/index.html
+
+    - mkdir public/redoc
+    - curl -Lo public/redoc/redoc.js https://cdn.jsdelivr.net/npm/redoc@2.0.0-rc.45/bundles/redoc.standalone.js
+    - cp -r docs/schemas public/redoc/schemas
+    - cp docs/redoc/index.html public/redoc/index.html
   artifacts:
     paths:
       - public
