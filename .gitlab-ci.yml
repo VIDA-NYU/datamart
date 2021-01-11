@@ -164,7 +164,7 @@ pages-test:
     - cp -r docs/_build/html pages
 
     - mkdir pages/redoc
-    - curl -Lo pages/redoc/redoc.min.js https://cdn.jsdelivr.net/npm/redoc@1.22.3/dist/redoc.min.js
+    - curl -Lo pages/redoc/redoc.js https://cdn.jsdelivr.net/npm/redoc@2.0.0-rc.45/bundles/redoc.standalone.js
     - python3 -c 'import json,yaml; json.dump(yaml.safe_load(open("docs/schemas/restapi.yaml")), open("pages/redoc/restapi.json", "w"))'
     - cp docs/schemas/query_input_schema.json docs/schemas/query_result_schema.json pages/redoc/
     - cp docs/redoc/index.html pages/redoc/index.html
@@ -184,7 +184,7 @@ pages:
     - cp -r docs/_build/html public
 
     - mkdir public/redoc
-    - curl -Lo public/redoc/redoc.min.js https://cdn.jsdelivr.net/npm/redoc@1.22.3/dist/redoc.min.js
+    - curl -Lo public/redoc/redoc.js https://cdn.jsdelivr.net/npm/redoc@2.0.0-rc.45/bundles/redoc.standalone.js
     - python3 -c 'import json,yaml; json.dump(yaml.safe_load(open("docs/schemas/restapi.yaml")), open("public/redoc/restapi.json", "w"))'
     - cp docs/schemas/query_input_schema.json docs/schemas/query_result_schema.json public/redoc/
     - cp docs/redoc/index.html public/redoc/index.html
