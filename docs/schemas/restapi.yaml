@@ -25,7 +25,7 @@ paths:
     post:
       tags:
       - "ingest"
-      summary: "Add a new dataset to the index"
+      summary: "Add a dataset to the index"
       operationId: "upload"
       requestBody:
         content:
@@ -175,7 +175,7 @@ paths:
     post:
       tags:
       - "query"
-      summary: Profile a dataset for future use in search (as 'data_profile')
+      summary: Profile a dataset
       description: |
         The JSON object returned by this endpoint can be passed to /search as the 'data_profile'.
 
