@@ -1,7 +1,24 @@
 openapi: 3.0.1
 info:
   title: "Auctus"
-  description: "REST API for Datamart."
+  description: |
+    REST API for Auctus.
+
+    # Introduction
+
+    Auctus is a dataset search engine and data augmentation platform developed at New York University. It can be used to index the content of datasets from a variety of sources, that can later be queried to find data that can be joined or appended to a user's data.
+
+    The system can be found at this address: https://auctus.vida-nyu.org/
+
+    You can find the source code on GitLab: https://gitlab.com/ViDA-NYU/auctus/auctus
+
+    # REST API introduction
+
+    There is also a [Python client library](https://docs.auctus.vida-nyu.org/python/datamart-rest.html) for this API.
+
+    The API is versioned, with the current version being `v1`. The full paths for an API request would therefore be something like:
+
+        https://auctus.vida-nyu.org/api/v1/download/datamart.socrata.data-cityofnewyork-us.ht4t-wzcm
   contact:
     email: "remi.rampin@nyu.edu"
   license:
