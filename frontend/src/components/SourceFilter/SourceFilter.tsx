@@ -53,6 +53,15 @@ class SourceFilter extends React.PureComponent<SourceFilterProps> {
     });
     const sourcesList = Object.entries(sources);
     sourcesList.sort((a, b) => {
+      // Compare size of bucket
+      const ka: number = (facetBuckets && facetBuckets.buckets[a[0]]) || 0;
+      const kb: number = (facetBuckets && facetBuckets.buckets[b[0]]) || 0;
+      if (ka < kb) {
+        return 1;
+      } else if (ka > kb) {
+        return -1;
+      }
+      // Compare by name
       if (a[0] < b[0]) {
         return -1;
       } else if (a[0] > b[0]) {
