@@ -274,6 +274,8 @@ paths:
                       $ref: "#/components/schemas/Result"
                   facets:
                     $ref: "#/components/schemas/Facets"
+                  total:
+                    type: integer
                 required: ["results"]
                 additionalProperties: false
         400:

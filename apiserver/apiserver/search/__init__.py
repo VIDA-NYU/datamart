@@ -626,6 +626,9 @@ class Search(BaseHandler, GracefulHandler, ProfilePostedData):
                 }
                 for k, v in response['aggregations'].items()
             }
+            total = None
+            if response['hits']['total']['relation'] == 'eq':
+                total = response['hits']['total']['value']
         else:
             if page or size:
                 return self.send_error_json(
@@ -645,6 +648,7 @@ class Search(BaseHandler, GracefulHandler, ProfilePostedData):
                 union=search_unions,
             )
             aggs = None
+            total = None
 
         results = [enhance_metadata(result) for result in results]
 
@@ -655,7 +659,9 @@ class Search(BaseHandler, GracefulHandler, ProfilePostedData):
                 if sample:
                     result['sample'] = list(csv.reader(io.StringIO(sample)))
 
+        response = {'results': results}
         if aggs is not None:
-            return self.send_json({'results': results, 'facets': aggs})
-        else:
-            return self.send_json({'results': results})
+            response['facets'] = aggs
+        if total is not None:
+            response['total'] = total
+        return self.send_json(response)
